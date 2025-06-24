@@ -1,6 +1,6 @@
 /* @import './base.css'; */
 @import 'tailwindcss';
-/* 
+
 body {
   display: flex;
   align-items: center;
@@ -169,4 +169,4 @@ code {
   .actions {
     display: none;
   }
-} */
+}
