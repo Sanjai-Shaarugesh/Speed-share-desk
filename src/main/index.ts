@@ -52,6 +52,26 @@ app.whenReady().then(() => {
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
 
+  ipcMain.on('open-answer', () => {
+  const answerWindow = new BrowserWindow({
+    width: 900,
+    height: 670,
+    autoHideMenuBar: true,
+    show: false,
+    webPreferences: {
+      preload: join(__dirname, '../preload/index.js'),
+      sandbox: false
+    }
+  });
+
+  answerWindow.once('ready-to-show', () => {
+    answerWindow.show();
+  });
+
+  // Open directly to `#/answer` route
+  answerWindow.loadURL('http://localhost:5173/#/answer');
+});
+
   createWindow()
 
   app.on('activate', function () {

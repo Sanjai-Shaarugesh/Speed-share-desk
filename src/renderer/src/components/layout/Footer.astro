@@ -1,0 +1,26 @@
+---
+// File: Footer.astro
+import { githubLink } from '../../configs';
+import Github from '../icons/Github.astro';
+---
+
+<footer
+  class="footer bg-neutral text-neutral-content p-6 flex justify-center items-center"
+  style="
+    padding-bottom: max(env(safe-area-inset-bottom), 3.5rem);
+    padding-left: max(env(safe-area-inset-left), 3.5rem);
+    padding-right: max(env(safe-area-inset-right), 3.5rem);
+  "
+>
+  <aside class="flex items-center gap-4">
+    <Github />
+    <a
+      href={githubLink + '/blob/main/LICENSE'}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="text-sm"
+    >
+      <p>Copyright © {new Date().getFullYear()} - All rights reserved</p>
+    </a>
+  </aside>
+</footer>
