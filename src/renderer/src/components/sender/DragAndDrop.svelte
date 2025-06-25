@@ -5,7 +5,7 @@
 
   type FileItem = {
     file: File;
-    url?: string;
+    dataUrl?: string;
     status?: 'pending' | 'sent';
   };
 
@@ -20,18 +20,38 @@
   let fileInput: HTMLInputElement;
   let isDragging = $state(false);
 
-  function setPreviewFiles(files: FileList) {
-      const existingKeys = new Set(fileItems.map((p) => p.file.name + p.file.lastModified));
+  // Convert file to data URL to avoid CSP issues with blob URLs
+  function fileToDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
 
-      const newItems: FileItem[] = [...files]
-        .filter((file) => !existingKeys.has(file.name + file.lastModified))
-        .map((file) => ({
-          file,
-          url: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
-          status: 'pending' as const
-        }));
+  async function setPreviewFiles(files: FileList) {
+    const existingKeys = new Set(fileItems.map((p) => p.file.name + p.file.lastModified));
 
-      fileItems = [...fileItems, ...newItems];
+    for (const file of files) {
+      if (existingKeys.has(file.name + file.lastModified)) continue;
+
+      const newItem: FileItem = {
+        file,
+        status: 'pending' as const
+      };
+
+      // Create data URL for images to avoid CSP issues
+      if (file.type.startsWith('image/')) {
+        try {
+          newItem.dataUrl = await fileToDataUrl(file);
+        } catch (error) {
+          console.warn('Failed to create preview for', file.name, error);
+        }
+      }
+
+      fileItems = [...fileItems, newItem];
+    }
   }
 
   function setupDropAreaListeners() {
@@ -150,7 +170,6 @@
 
   function removeFile(index: number) {
     const removed = fileItems[index];
-    if (removed.url) URL.revokeObjectURL(removed.url);
     fileItems = fileItems.filter((_, i) => i !== index);
     addToastMessage(`Removed ${removed.file.name}`);
   }
@@ -163,35 +182,68 @@
     else return (bytes / 1073741824).toFixed(1) + ' GB';
   }
 
-  // Get file icon based on MIME type
-  function getFileIcon(file: File): string {
-    const type = file.type;
-    
-    if (type.startsWith('image/')) return 'image';
-    if (type.startsWith('audio/')) return 'audio';
-    if (type.startsWith('video/')) return 'video';
-    if (type.startsWith('text/')) return 'text';
-    if (type.includes('pdf')) return 'pdf';
-    if (type.includes('word') || type.includes('document')) return 'word';
-    if (type.includes('excel') || type.includes('sheet')) return 'excel';
-    if (type.includes('zip') || type.includes('compressed')) return 'archive';
-    
-    return 'file';
+  // Get file extension for icon generation
+  function getFileExtension(fileName: string): string {
+    return fileName.split('.').pop()?.toLowerCase() ?? '';
   }
 
-  // Get background color for file type icon based on theme
-  function getFileIconBg(fileType: string): string {
-    switch (fileType) {
-      case 'image': return 'bg-purple-100 text-purple-500 [html[data-theme=dark]_&]:bg-purple-900 [html[data-theme=dark]_&]:text-purple-300';
-      case 'audio': return 'bg-blue-100 text-blue-500 [html[data-theme=dark]_&]:bg-blue-900 [html[data-theme=dark]_&]:text-blue-300';
-      case 'video': return 'bg-pink-100 text-pink-500 [html[data-theme=dark]_&]:bg-pink-900 [html[data-theme=dark]_&]:text-pink-300';
-      case 'text': return 'bg-gray-100 text-gray-500 [html[data-theme=dark]_&]:bg-gray-800 [html[data-theme=dark]_&]:text-gray-300';
-      case 'pdf': return 'bg-red-100 text-red-500 [html[data-theme=dark]_&]:bg-red-900 [html[data-theme=dark]_&]:text-red-300';
-      case 'word': return 'bg-blue-100 text-blue-500 [html[data-theme=dark]_&]:bg-blue-900 [html[data-theme=dark]_&]:text-blue-300';
-      case 'excel': return 'bg-green-100 text-green-500 [html[data-theme=dark]_&]:bg-green-900 [html[data-theme=dark]_&]:text-green-300';
-      case 'archive': return 'bg-yellow-100 text-yellow-500 [html[data-theme=dark]_&]:bg-yellow-900 [html[data-theme=dark]_&]:text-yellow-300';
-      default: return 'bg-gray-100 text-gray-500 [html[data-theme=dark]_&]:bg-gray-800 [html[data-theme=dark]_&]:text-gray-300';
+  // Generate SVG icon as data URL for different file types with theme-aware colors
+  function getFileIconSvg(file: File): string {
+    const extension = getFileExtension(file.name);
+    const type = file.type;
+    
+    let iconPath = '';
+    let bgColor = '#64748b'; // slate-500
+    let textColor = '#ffffff';
+    
+    if (type.startsWith('image/')) {
+      bgColor = '#8b5cf6'; // violet-500
+      iconPath = `<path d="M4 4h16v12l-4-4-4 4-4-4-4 4V4z" fill="${textColor}"/>
+                 <circle cx="8" cy="8" r="1.5" fill="${textColor}"/>`;
+    } else if (type.startsWith('audio/')) {
+      bgColor = '#3b82f6'; // blue-500
+      iconPath = `<path d="M12 2v10.5a2.5 2.5 0 1 0 1 2V7h3V2h-4z" fill="${textColor}"/>`;
+    } else if (type.startsWith('video/')) {
+      bgColor = '#ec4899'; // pink-500
+      iconPath = `<polygon points="8,6 8,18 18,12" fill="${textColor}"/>
+                 <rect x="6" y="4" width="12" height="16" rx="2" fill="none" stroke="${textColor}" stroke-width="1"/>`;
+    } else if (type.startsWith('text/')) {
+      bgColor = '#64748b'; // slate-500
+      iconPath = `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="${textColor}"/>
+                 <path d="M14 2v6h6" fill="none" stroke="${bgColor}" stroke-width="2"/>
+                 <path d="M8 13h8M8 17h8M8 9h2" stroke="${bgColor}" stroke-width="1"/>`;
+    } else if (type.includes('pdf')) {
+      bgColor = '#dc2626'; // red-600
+      iconPath = `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="${textColor}"/>
+                 <path d="M14 2v6h6" fill="none" stroke="${bgColor}" stroke-width="2"/>
+                 <text x="12" y="16" text-anchor="middle" fill="${bgColor}" font-size="6" font-weight="bold">PDF</text>`;
+    } else if (type.includes('word') || type.includes('document')) {
+      bgColor = '#2563eb'; // blue-600
+      iconPath = `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="${textColor}"/>
+                 <path d="M14 2v6h6" fill="none" stroke="${bgColor}" stroke-width="2"/>
+                 <text x="12" y="16" text-anchor="middle" fill="${bgColor}" font-size="5" font-weight="bold">DOC</text>`;
+    } else if (type.includes('excel') || type.includes('sheet')) {
+      bgColor = '#16a34a'; // green-600
+      iconPath = `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="${textColor}"/>
+                 <path d="M14 2v6h6" fill="none" stroke="${bgColor}" stroke-width="2"/>
+                 <text x="12" y="16" text-anchor="middle" fill="${bgColor}" font-size="5" font-weight="bold">XLS</text>`;
+    } else if (type.includes('zip') || type.includes('compressed')) {
+      bgColor = '#d97706'; // amber-600
+      iconPath = `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="${textColor}"/>
+                 <path d="M14 2v6h6" fill="none" stroke="${bgColor}" stroke-width="2"/>
+                 <text x="12" y="16" text-anchor="middle" fill="${bgColor}" font-size="5" font-weight="bold">ZIP</text>`;
+    } else {
+      bgColor = '#64748b'; // slate-500
+      iconPath = `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" fill="${textColor}"/>
+                 <path d="M14 2v6h6" fill="none" stroke="${bgColor}" stroke-width="2"/>`;
     }
+    
+    return `data:image/svg+xml;base64,${btoa(`
+      <svg width="48" height="48" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <rect width="24" height="24" rx="3" fill="${bgColor}"/>
+        ${iconPath}
+      </svg>
+    `)}`;
   }
 
   onMount(() => {
@@ -201,18 +253,15 @@
 
   onDestroy(() => {
     document.removeEventListener('paste', handlePasteEvent);
-    fileItems.forEach((item) => {
-      if (item.url) URL.revokeObjectURL(item.url);
-    });
   });
 </script>
 
 <!-- Upload Area -->
 <div class="w-full">
   <label
-    class="relative flex flex-col border-2 border-dashed rounded-lg cursor-pointer transition-colors duration-200
-    border-gray-300 [html[data-theme=dark]_&]:border-gray-700 hover:border-blue-400 [html[data-theme=dark]_&]:hover:border-blue-500
-    {isDragging ? 'bg-blue-50 [html[data-theme=dark]_&]:bg-blue-900/20 border-blue-400 [html[data-theme=dark]_&]:border-blue-500' : 'bg-white [html[data-theme=dark]_&]:bg-gray-800'}"
+    class="relative flex flex-col border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200
+    border-gray-300 dark:border-gray-600 hover:border-primary bg-white dark:bg-gray-800
+    {isDragging ? 'border-primary bg-primary/10 dark:bg-primary/10' : ''}"
     bind:this={dropArea}
   >
     <input
@@ -226,14 +275,14 @@
     />
 
     <div class="flex flex-col items-center justify-center py-8 px-4 text-center">
-      <div class="p-3 mb-2 rounded-full bg-blue-50 [html[data-theme=dark]_&]:bg-blue-900/30 text-blue-500 [html[data-theme=dark]_&]:text-blue-300">
+      <div class="p-3 mb-4 rounded-full bg-primary/10 text-primary">
         <Paperclip class="w-6 h-6" />
       </div>
 
-      <p class="mb-1 font-medium text-gray-700 [html[data-theme=dark]_&]:text-gray-300">
+      <p class="mb-2 font-medium text-gray-900 dark:text-gray-100">
         Drop files here or click to upload
       </p>
-      <p class="text-xs text-gray-500 [html[data-theme=dark]_&]:text-gray-400 hidden md:block">
+      <p class="text-sm text-gray-600 dark:text-gray-400 hidden md:block">
         You can also paste from clipboard (Ctrl+V)
       </p>
     </div>
@@ -241,48 +290,76 @@
 
   <!-- Paste button for mobile -->
   <button 
-    class="mt-3 w-full py-2 px-4 md:hidden font-medium rounded-md text-white bg-blue-500 hover:bg-blue-600 [html[data-theme=dark]_&]:bg-blue-600 [html[data-theme=dark]_&]:hover:bg-blue-700 transition-colors" 
+    class="btn btn-primary w-full mt-4 md:hidden" 
     onclick={handlePasteFromClipboardButton}
   >
+    <Paperclip class="w-4 h-4" />
     Paste from clipboard
   </button>
 
   <!-- File Preview Section -->
   {#if fileItems.length > 0}
     <div class="mt-6">
-      <h3 class="text-lg font-medium mb-3 text-gray-800 [html[data-theme=dark]_&]:text-gray-200">
-        Selected {fileItems.length} {fileItems.length === 1 ? 'File' : 'Files'}
-      </h3>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          Selected Files
+        </h3>
+        <div class="badge badge-primary badge-lg">
+          {fileItems.length}
+        </div>
+      </div>
+      
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         {#each fileItems as item, index}
-          <div class="p-4 border rounded-lg bg-white [html[data-theme=dark]_&]:bg-gray-800 border-gray-200 [html[data-theme=dark]_&]:border-gray-700 shadow-sm transition-colors">
-            <div class="flex gap-4 items-start">
-              {#if item.url}
-                <div class="w-16 h-16 rounded-md overflow-hidden flex-shrink-0 border border-gray-200 [html[data-theme=dark]_&]:border-gray-700">
-                  <img src={item.url} alt={item.file.name} class="w-full h-full object-cover" />
+          <div class="bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-all duration-200">
+            <div class="p-4">
+              <div class="flex gap-4 items-start">
+                <!-- File Preview/Icon -->
+                <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600">
+                  {#if item.dataUrl}
+                    <img src={item.dataUrl} alt={item.file.name} class="w-full h-full object-cover" />
+                  {:else}
+                    <div class="w-full h-full flex items-center justify-center">
+                      <img
+                        src={getFileIconSvg(item.file)}
+                        alt={item.file.name}
+                        class="w-12 h-12 object-contain"
+                      />
+                    </div>
+                  {/if}
                 </div>
-              {:else}
-                <div class="w-16 h-16 rounded-md overflow-hidden flex-shrink-0 flex items-center justify-center {getFileIconBg(getFileIcon(item.file))}">
-                  <span class="text-2xl">{getFileIcon(item.file).charAt(0).toUpperCase()}</span>
-                </div>
-              {/if}
 
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-gray-900 [html[data-theme=dark]_&]:text-gray-100 truncate" title={item.file.name}>
-                  {item.file.name}
-                </p>
-                <p class="text-xs text-gray-500 [html[data-theme=dark]_&]:text-gray-400 mt-1">
-                  {formatFileSize(item.file.size)} • {item.file.type || 'Unknown type'}
-                </p>
-                <div class="flex items-center mt-2">
-                  
-                  <button
-                    class="ml-auto inline-flex items-center p-1 rounded-full text-red-500 hover:text-red-700 [html[data-theme=dark]_&]:text-red-400 [html[data-theme=dark]_&]:hover:text-red-300 hover:bg-red-100 [html[data-theme=dark]_&]:hover:bg-red-900/30 transition-colors"
-                    onclick={() => removeFile(index)}
-                    aria-label="Remove file"
-                  >
-                    <Trash2 class="w-4 h-4" />
-                  </button>
+                <!-- File Info -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0 flex-1">
+                      <p class="font-medium text-gray-900 dark:text-gray-100 truncate" title={item.file.name}>
+                        {item.file.name}
+                      </p>
+                      <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        {formatFileSize(item.file.size)} • {item.file.type || 'Unknown type'}
+                      </p>
+                    </div>
+
+                    <!-- Status Badge -->
+                    <div class="px-2 py-1 text-xs font-medium rounded-full 
+                      {item.status === 'pending' 
+                        ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' 
+                        : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'}">
+                      {item.status === 'pending' ? 'Pending' : 'Sent'}
+                    </div>
+                  </div>
+
+                  <!-- Remove Button -->
+                  <div class="flex justify-end mt-3">
+                    <button
+                      class="p-1 rounded-full text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                      onclick={() => removeFile(index)}
+                      aria-label="Remove file"
+                    >
+                      <Trash2 class="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

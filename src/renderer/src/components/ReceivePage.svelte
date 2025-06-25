@@ -140,7 +140,9 @@
     addToastMessage('Copied to clipboard', 'info');
   }
 
-
+  function navigateToOfferPage() {
+    window.location.href = `${window.location.origin}/`;
+  }
 
   function scanOfferCode(data: string) {
     offerCode = data;
@@ -301,10 +303,9 @@ function handlePaste(event: ClipboardEvent) {
 </div>
 
 <div class="mt-4 flex gap-2">
-  <a href="#/" class="inline-block">
-    <button class="btn btn-dash btn-warning flex items-center gap-2">
-      Go to Offer Page
-      <CircleArrowOutUpLeft />
+  <a href="/" data-navigo>
+    <button class="btn btn-dash btn-warning" onclick={navigateToOfferPage}>
+      Go to Offer Page <CircleArrowOutUpLeft />
     </button>
   </a>
 </div>
@@ -313,7 +314,33 @@ function handlePaste(event: ClipboardEvent) {
   <Collapse title="2. Share Answer Code" isOpen={answerCode !== '' && !isConnecting}>
     {#if answerCode}
       <p>Share this answer code with your peer to complete the connection.</p>
-   
+     <div class="relative mt-4 flex items-center justify-center gap-2">
+  {#each Array(5) as _, i}
+<div class="flex items-center">
+  <input
+    type={showAnswerCode ? 'text' : 'password'}
+    maxlength="1"
+    class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-center text-sm sm:text-base md:text-xl border rounded-md shadow-sm transition-colors duration-200 input input-bordered focus:input-primary"
+    value={answerCode[i] || ''}
+    oninput={(e) => handleAnswerInput(i, e)}
+    onpaste={handleAnswerPaste}
+    readonly={false}
+  />
+  {#if i < 4}
+    <span class="mx-1 sm:mx-2 opacity-60 select-none text-sm sm:text-base md:text-lg">‒</span>
+  {/if}
+</div>
+  {/each}
+
+  <!-- Eye toggle -->
+ <div class="absolute top-0 right-0 p-0.5 sm:p-1">
+  <Eye
+    onChange={(show) => {
+      showAnswerCode = show;
+    }}
+  />
+</div>
+</div>
       <div class="mt-4 flex gap-2">
         <button class="btn btn-soft btn-info gap-2" onclick={copyAnswerCode}
           >Copy Answer <Copy /></button

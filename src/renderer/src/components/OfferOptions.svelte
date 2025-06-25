@@ -12,7 +12,7 @@
   let encryptionEnabled = $state(defaultSendOptions.isEncrypt ? 'true' : 'false');
   let chunkSize: number = $state(defaultSendOptions.chunkSize);
   let iceServer: string = $state(defaultSendOptions.iceServer);
-
+z
   function getEncryptionEnabled(): boolean {
     return encryptionEnabled === 'true';
   }
