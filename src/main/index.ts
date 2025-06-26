@@ -115,12 +115,10 @@ function createAnswerWindow(): void {
     // In development, load with hash route
     answerWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}#/answer`);
   } else {
-    // In production, you might need to handle routing differently
-    // Option 1: Load same file and let client-side routing handle it
+  
     answerWindow.loadFile(join(__dirname, '../renderer/index.html'));
     
-    // Option 2: If you have a separate answer.html file
-    // answerWindow.loadFile(join(__dirname, '../renderer/answer.html'));
+
     
     // After loading, navigate to answer route
     answerWindow.webContents.once('did-finish-load', () => {
