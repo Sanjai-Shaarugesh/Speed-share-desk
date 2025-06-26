@@ -48,3 +48,7 @@ contextBridge.exposeInMainWorld('electron', {
     isMaximized: () => ipcRenderer.invoke('window-is-maximized')
   }
 });
+
+contextBridge.exposeInMainWorld('electron', {
+  openExternal: (url: string) => shell.openExternal(url),
+});

@@ -135,21 +135,22 @@
               <div class="space-y-3">
                 <div>
                   <h4 class="text-sm font-medium text-gray-900 dark:text-white">Developer</h4>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">Your Name</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">Sanjai-Shaarugesh</p>
                 </div>
                 
                 <div>
                   <h4 class="text-sm font-medium text-gray-900 dark:text-white">Contact</h4>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">your.email@example.com</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">shaarugesh6@gmail.com</p>
                 </div>
                 
                 <div>
-                  <h4 class="text-sm font-medium text-gray-900 dark:text-white">Built with</h4>
-                  <div class="flex flex-wrap gap-2 mt-1">
-                    <span class="px-2 py-1 bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 text-xs rounded-full">Svelte</span>
-                    <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded-full">Electron</span>
-                    <span class="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs rounded-full">Tailwind CSS</span>
-                  </div>
+                   <h4 class="text-sm font-medium text-gray-900 dark:text-white">Support the development:</h4>
+                
+
+<a href="https://buymeacoffee.com/sanjai" target="_blank">
+  <img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee">
+</a>
+
                 </div>
                 
                 <div>
