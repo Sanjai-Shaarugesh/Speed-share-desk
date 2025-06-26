@@ -32,3 +32,19 @@ if (process.contextIsolated) {
   // @ts-ignore
   window.electron = api
 }
+
+contextBridge.exposeInMainWorld('electron', {
+  windowControls: {
+    minimize: () => ipcRenderer.send('window-control', 'minimize'),
+    maximize: () => {
+      if (process.platform === 'linux') {
+        // Linux needs special handling for maximization
+        ipcRenderer.send('window-control', 'toggle-maximize');
+      } else {
+        ipcRenderer.send('window-control', 'maximize');
+      }
+    },
+    close: () => ipcRenderer.send('window-control', 'close'),
+    isMaximized: () => ipcRenderer.invoke('window-is-maximized')
+  }
+});

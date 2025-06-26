@@ -1,130 +1,129 @@
 <script lang="ts">
-  // Svelte 5 runes
-  let isMaximized = $state(false);
-  let currentPath = $state('/');
-  let isDarkTheme = $state(false);
-  let canGoBack = $state(false);
-  let canGoForward = $state(false);
-
-  // Derived state using $derived
-  const themeClasses = $derived({
-    bg: isDarkTheme ? 'bg-gray-800' : 'bg-gray-100',
-    border: isDarkTheme ? 'border-gray-700' : 'border-gray-300',
-    text: isDarkTheme ? 'text-gray-200' : 'text-gray-800',
-    buttonHover: isDarkTheme ? 'hover:bg-gray-700' : 'hover:bg-gray-200',
-    disabled: isDarkTheme ? 'text-gray-500' : 'text-gray-400',
-    controlHover: isDarkTheme ? 'hover:bg-gray-600' : 'hover:bg-gray-300'
-  });
-
-  // Window controls
-  const handleMinimize = () => window.api?.windowMinimize();
-  const handleMaximize = () => window.api?.windowMaximize();
-  const handleClose = () => window.api?.windowClose();
+  import { onMount } from 'svelte'
+  import { themeStore } from '../stores/theme'
   
-  // Navigation controls
-  const handleBack = () => history.back();
-  const handleForward = () => history.forward();
-  const handleHome = () => window.location.hash = '#/';
-
-  // Initialize and set up listeners
-  $effect(() => {
-    // Check window state
-    const checkWindowState = async () => {
-      if (window.api) {
-        isMaximized = await window.api.windowIsMaximized();
-        window.api.onWindowMaximized((maximized: boolean) => {
-          isMaximized = maximized;
-        });
-      }
-    };
-
-    // Detect system theme
-    const detectTheme = () => {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      isDarkTheme = mediaQuery.matches;
-      mediaQuery.addEventListener('change', (e) => {
-        isDarkTheme = e.matches;
-      });
-      return mediaQuery;
-    };
-
-    // Set up navigation state
-    const setupNavigation = () => {
-      const updateNavState = () => {
-        canGoBack = window.history.state?.idx > 0;
-        canGoForward = window.history.state?.idx < window.history.length - 1;
-      };
-      window.addEventListener('popstate', updateNavState);
-      updateNavState();
-      return () => window.removeEventListener('popstate', updateNavState);
-    };
-
-    checkWindowState();
-    const mediaQuery = detectTheme();
-    const cleanupNavigation = setupNavigation();
-
-    // Update current path when hash changes
-    const updatePath = () => {
-      currentPath = window.location.hash.substring(1) || '/';
-    };
-    window.addEventListener('hashchange', updatePath);
-    updatePath();
-
+  let isDark = $state(false)
+  let platform = $state<NodeJS.Platform>('win32')
+  
+  onMount(() => {
+    if (window.electron) {
+      platform = window.electron.platform
+      
+      // Get initial theme
+      window.electron.getTheme().then(({ shouldUseDarkColors }) => {
+        isDark = shouldUseDarkColors
+      })
+      
+      // Listen for theme changes
+      window.electron.onThemeUpdated((darkMode) => {
+        isDark = darkMode
+      })
+    }
+    
     return () => {
-      if (window.api) window.api.removeAllListeners('window-maximized');
-      mediaQuery.removeEventListener('change', () => {});
-      cleanupNavigation();
-      window.removeEventListener('hashchange', updatePath);
-    };
-  });
+      if (window.electron) {
+        window.electron.removeThemeListener()
+      }
+    }
+  })
+  
+  function minimize() {
+    window.electron?.minimizeWindow()
+  }
+  
+  function maximize() {
+    window.electron?.maximizeWindow()
+  }
+  
+  function close() {
+    window.electron?.closeWindow()
+  }
+  
+  // Different styles for different platforms
+  $: titleBarClass = platform === 'darwin' 
+    ? 'pl-20' // macOS - leave space for traffic lights
+    : platform === 'win32' 
+    ? 'pl-4' // Windows
+    : 'pl-4' // Linux
 </script>
 
-<!-- Rest of your component remains the same -->
+{#if platform !== 'darwin'}
+<!-- Custom title bar for Windows and Linux -->
 <div 
-  class="flex items-center h-10 {themeClasses.bg} border-b {themeClasses.border} select-none shadow-sm"
+  class="flex items-center justify-between h-8 select-none drag-region {isDark ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'} border-b"
+  style="app-region: drag;"
 >
-  <!-- Left side - Navigation and path -->
-  <div class="flex-1 h-full flex items-center px-3 app-drag-region">
-    <!-- Navigation Controls -->
-    <div class="flex items-center space-x-1 mr-3">
-      <button
-        class="w-7 h-7 rounded-md flex items-center justify-center {themeClasses.buttonHover} transition-all duration-200 {canGoBack ? themeClasses.text : themeClasses.disabled}"
-        class:opacity-50={!canGoBack}
-        disabled={!canGoBack}
-        on:click={handleBack}
-        title="Back"
-      >
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-      
-      <!-- Other buttons and content remains the same -->
-      <!-- ... -->
+  <div class="flex items-center {titleBarClass}">
+    <div class="flex items-center space-x-2">
+      <svg class="w-4 h-4 {isDark ? 'text-blue-400' : 'text-blue-600'}" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+      </svg>
+      <span class="text-sm font-medium {isDark ? 'text-gray-100' : 'text-gray-900'}">
+        Your App Name
+      </span>
+    </div>
+  </div>
+  
+  <div class="flex items-center no-drag">
+    <!-- Minimize button -->
+    <button
+      onclick={minimize}
+      class="flex items-center justify-center w-12 h-8 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+      title="Minimize"
+    >
+      <svg class="w-3 h-3 {isDark ? 'text-gray-300' : 'text-gray-700'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+      </svg>
+    </button>
+    
+    <!-- Maximize button -->
+    <button
+      onclick={maximize}
+      class="flex items-center justify-center w-12 h-8 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+      title="Maximize"
+    >
+      <svg class="w-3 h-3 {isDark ? 'text-gray-300' : 'text-gray-700'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M16 4h2a2 2 0 012 2v2M16 20h2a2 2 0 002-2v-2" />
+      </svg>
+    </button>
+    
+    <!-- Close button -->
+    <button
+      onclick={close}
+      class="flex items-center justify-center w-12 h-8 hover:bg-red-500 hover:text-white transition-colors"
+      title="Close"
+    >
+      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  </div>
+</div>
+{:else}
+<!-- macOS - Just app title with traffic light spacing -->
+<div 
+  class="flex items-center h-8 select-none drag-region {isDark ? 'bg-gray-900' : 'bg-white'}"
+  style="app-region: drag;"
+>
+  <div class="flex items-center {titleBarClass}">
+    <div class="flex items-center space-x-2">
+      <svg class="w-4 h-4 {isDark ? 'text-blue-400' : 'text-blue-600'}" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+      </svg>
+      <span class="text-sm font-medium {isDark ? 'text-gray-100' : 'text-gray-900'}">
+        Your App Name
+      </span>
     </div>
   </div>
 </div>
+{/if}
 
 <style>
-  /* Your styles remain the same */
-  .app-drag-region {
+  .drag-region {
     -webkit-app-region: drag;
   }
   
-  .no-drag, .app-drag-region button {
+  .no-drag {
     -webkit-app-region: no-drag;
-  }
-  
-  button {
-    transition: all 0.2s ease;
-  }
-  
-  button:focus-visible {
-    outline: 2px solid #3584e4;
-    outline-offset: -2px;
-  }
-  
-  button:active {
-    transform: scale(0.95);
   }
 </style>

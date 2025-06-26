@@ -2,10 +2,12 @@
   import Router from 'svelte-spa-router'
   import routes from './routes'
   import { onMount } from 'svelte'
+  import Shortcuts from './components/shortcuts.svelte';
 
   let isDark = false
   let appTitle = "Speed-share"
   let platform = window.electron?.platform || 'win32' // Default to win32 if not in Electron
+  let showDeveloperInfo = false
 
   onMount(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
@@ -48,6 +50,14 @@
       window.electron.setTheme(isDark ? 'dark' : 'light')
     }
   }
+
+  function toggleDeveloperInfo() {
+    showDeveloperInfo = !showDeveloperInfo
+  }
+
+  function closeDeveloperInfo() {
+    showDeveloperInfo = false
+  }
 </script>
 
 <main class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200 relative">
@@ -70,16 +80,105 @@
             </svg>
           {/if}
         </button>
+        
+        <!-- Info Button -->
+        <button
+          on:click={toggleDeveloperInfo}
+          class="p-1 rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 backdrop-blur-sm"
+          title="Developer Information"
+        >
+          <svg class="w-4 h-4 text-blue-500 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+          </svg>
+        </button>
+        
         <div class="w-4 h-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-sm flex-shrink-0"></div>
-      <span class="absolute left-1/2 transform -translate-x-1/2 text-base text-center font-semibold font-mono tracking-wide text-gray-800 dark:text-gray-200 pointer-events-none">
-  {appTitle}
-</span>
+        <span class="absolute left-1/2 transform -translate-x-1/2 text-base text-center font-semibold font-mono tracking-wide text-gray-800 dark:text-gray-200 pointer-events-none text-lg md:text-xl font-bold animate-pulse">
+          {appTitle}
+        </span>
       </div>
     </div>
+
+    <!-- Developer Info Modal -->
+    {#if showDeveloperInfo}
+      <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] no-drag" on:click={closeDeveloperInfo}>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-6 mx-4 max-w-md w-full border border-gray-200 dark:border-gray-700" on:click|stopPropagation>
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+              <svg class="w-5 h-5 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+              </svg>
+              Developer Info
+            </h2>
+            <button
+              on:click={closeDeveloperInfo}
+              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
+          <div class="space-y-4">
+            <div class="text-center">
+              <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Speed-share</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Version 1.0.0</p>
+            </div>
+            
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <div class="space-y-3">
+                <div>
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-white">Developer</h4>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">Your Name</p>
+                </div>
+                
+                <div>
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-white">Contact</h4>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">your.email@example.com</p>
+                </div>
+                
+                <div>
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-white">Built with</h4>
+                  <div class="flex flex-wrap gap-2 mt-1">
+                    <span class="px-2 py-1 bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 text-xs rounded-full">Svelte</span>
+                    <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded-full">Electron</span>
+                    <span class="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs rounded-full">Tailwind CSS</span>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-white">Description</h4>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">A fast and secure file sharing application with modern UI and cross-platform support.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-4 flex justify-center space-x-4">
+              <a href="#" class="text-blue-500 hover:text-blue-600 text-sm font-medium transition-colors">
+                GitHub
+              </a>
+              <a href="#" class="text-blue-500 hover:text-blue-600 text-sm font-medium transition-colors">
+                Website
+              </a>
+              <a href="#" class="text-blue-500 hover:text-blue-600 text-sm font-medium transition-colors">
+                Support
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {/if}
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col items-center justify-center p-4 pt-12">
       <Router {routes} />
+      <Shortcuts/>
     </div>
   </div>
 </main>

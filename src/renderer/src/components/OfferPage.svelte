@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { addToastMessage } from '../../../stores/toastStore';
-  import { defaultSendOptions, githubLink, waitIceCandidatesTimeout } from '../../../config';
-  import Eye from '../components/icons/Eye.svelte';
-  import { Message } from '../../../proto/message';
-  import Collapse from '../components/layout/Collapse.svelte';
-  import OfferOptions from '../components/OfferOptions.svelte';
+  import { addToastMessage } from '../../../stores/toastStore'
+  import { defaultSendOptions, githubLink, waitIceCandidatesTimeout } from '../../../config'
+  import Eye from '../components/icons/Eye.svelte'
+  import { Message } from '../../../proto/message'
+  import Collapse from '../components/layout/Collapse.svelte'
+  import OfferOptions from '../components/OfferOptions.svelte'
   import {
     Asterisk,
     Cog,
@@ -14,55 +14,55 @@
     Send,
     HeartHandshake,
     FilePlus
-  } from '@lucide/svelte';
-  import { onMount, onDestroy } from 'svelte';
-  import { Capacitor } from '@capacitor/core';
+  } from '@lucide/svelte'
+  import { onMount, onDestroy } from 'svelte'
+  import { Capacitor } from '@capacitor/core'
 
   import {
     exportRsaPublicKeyToBase64,
     generateRsaKeyPair,
     importRsaPublicKeyFromBase64
-  } from '../../../utils/crypto';
-  import { sdpDecode, sdpEncode } from '../../../utils/sdpEncode';
-  import { generateUniqueCode, parseUniqueCode } from '../../../utils/uniqueCode';
-  import type { SendOptions } from '../../../type';
-  import Sender from '../components/sender/Sender.svelte';
-  import Receiver from '../components/receiver/Receiver.svelte';
-  import QrModal from '../components/qr/QrModal.svelte';
-  import ScanQrModal from '../components/qr/ScanQrModal.svelte';
-  import Toast from '../components/Toast.svelte';
+  } from '../../../utils/crypto'
+  import { sdpDecode, sdpEncode } from '../../../utils/sdpEncode'
+  import { generateUniqueCode, parseUniqueCode } from '../../../utils/uniqueCode'
+  import type { SendOptions } from '../../../type'
+  import Sender from '../components/sender/Sender.svelte'
+  import Receiver from '../components/receiver/Receiver.svelte'
+  import QrModal from '../components/qr/QrModal.svelte'
+  import ScanQrModal from '../components/qr/ScanQrModal.svelte'
+  import Toast from '../components/Toast.svelte'
   // import { navigate } from '../../../stores/navigationStore';
 
   // options
-  let sendOptions = $state(defaultSendOptions);
-  let rsa: CryptoKeyPair | undefined = $state(undefined); // private key
-  let rsaPub: CryptoKey | undefined = $state(undefined); // public key from other peer
+  let sendOptions = $state(defaultSendOptions)
+  let rsa: CryptoKeyPair | undefined = $state(undefined) // private key
+  let rsaPub: CryptoKey | undefined = $state(undefined) // public key from other peer
 
-  let showPassword = $state(false); // State to control password visibility
+  let showPassword = $state(false) // State to control password visibility
   // Value to bind with the input
 
   // webRTC
-  let connection: RTCPeerConnection | undefined = $state(undefined);
-  let dataChannel: RTCDataChannel | undefined = $state(undefined);
-  let isConnecting = $state(false);
-  let generating = $state(false);
-  let offerCode = $state('');
-  let showOfferCode = $state(false);
-  let answerCode = $state('');
+  let connection: RTCPeerConnection | undefined = $state(undefined)
+  let dataChannel: RTCDataChannel | undefined = $state(undefined)
+  let isConnecting = $state(false)
+  let generating = $state(false)
+  let offerCode = $state('')
+  let showOfferCode = $state(false)
+  let answerCode = $state('')
 
   // components
-  let receiver: Receiver | undefined = $state(undefined);
-  let sender: Sender | undefined = $state(undefined);
-  let sendMode = $state(true);
-  let showNewFile = $state(false);
-  let showOfferOptions = $state(false);
-  let qrModal: QrModal | undefined = $state(undefined);
+  let receiver: Receiver | undefined = $state(undefined)
+  let sender: Sender | undefined = $state(undefined)
+  let sendMode = $state(true)
+  let showNewFile = $state(false)
+  let showOfferOptions = $state(false)
+  let qrModal: QrModal | undefined = $state(undefined)
 
   // Debug logging functions
   function logWebRTCState() {
     if (!connection) {
-      console.error('WebRTC Connection: Not initialized');
-      return;
+      console.error('WebRTC Connection: Not initialized')
+      return
     }
 
     // console.log('WebRTC Connection Details:', {
@@ -82,24 +82,24 @@
     //   connectionExists: !!connection
     // });
 
-    logWebRTCState();
+    logWebRTCState()
   }
 
   async function createOfferCode(offer: RTCSessionDescription) {
-    let publicKeyBase64 = '';
+    let publicKeyBase64 = ''
     if (sendOptions.isEncrypt) {
-      rsa = await generateRsaKeyPair();
-      publicKeyBase64 = await exportRsaPublicKeyToBase64(rsa.publicKey);
+      rsa = await generateRsaKeyPair()
+      publicKeyBase64 = await exportRsaPublicKeyToBase64(rsa.publicKey)
     }
 
-    const sdp = sdpEncode(offer.sdp);
+    const sdp = sdpEncode(offer.sdp)
     offerCode = generateUniqueCode(sdp, {
       iceServer:
         defaultSendOptions.iceServer === sendOptions.iceServer ? undefined : sendOptions.iceServer,
       chunkSize:
         defaultSendOptions.chunkSize === sendOptions.chunkSize ? undefined : sendOptions.chunkSize,
       publicKey: publicKeyBase64
-    });
+    })
   }
 
   async function createPeerAndDataCannel() {
@@ -107,128 +107,128 @@
       iceServers: [{ urls: sendOptions.iceServer }],
       bundlePolicy: 'balanced',
       iceCandidatePoolSize: 4
-    });
+    })
 
     connection.onicecandidateerror = () => {
-      addToastMessage('ICE Candidate error', 'error');
-    };
+      addToastMessage('ICE Candidate error', 'error')
+    }
 
     dataChannel = connection.createDataChannel('data', {
       ordered: false // we handle the order by response status
-    });
+    })
     dataChannel.onopen = () => {
-      addToastMessage('Connected', 'success');
-      isConnecting = true;
-      qrModal?.close();
-    };
+      addToastMessage('Connected', 'success')
+      isConnecting = true
+      qrModal?.close()
+    }
     dataChannel.onmessage = (event) => {
-      const message = Message.decode(new Uint8Array(event.data));
+      const message = Message.decode(new Uint8Array(event.data))
 
       if (message.metaData !== undefined && receiver) {
-        receiver.onMetaData(message.id, message.metaData);
-        showNewFile = true;
+        receiver.onMetaData(message.id, message.metaData)
+        showNewFile = true
       } else if (message.chunk !== undefined && receiver) {
-        receiver.onChunkData(message.id, message.chunk);
+        receiver.onChunkData(message.id, message.chunk)
       } else if (message.receiveEvent !== undefined && sender) {
-        sender.onReceiveEvent(message.id, message.receiveEvent);
+        sender.onReceiveEvent(message.id, message.receiveEvent)
       }
-    };
+    }
     dataChannel.onerror = () => {
-      addToastMessage('WebRTC error', 'error');
-      isConnecting = false;
-      offerCode = '';
-    };
+      addToastMessage('WebRTC error', 'error')
+      isConnecting = false
+      offerCode = ''
+    }
     dataChannel.onclose = () => {
-      addToastMessage('Disconnected', 'error');
-      isConnecting = false;
-      offerCode = '';
-    };
+      addToastMessage('Disconnected', 'error')
+      isConnecting = false
+      offerCode = ''
+    }
   }
 
   async function generateOfferCode() {
-    generating = true;
-    await createPeerAndDataCannel();
+    generating = true
+    await createPeerAndDataCannel()
 
     if (!connection) {
-      addToastMessage('Failed to create WebRTC connection', 'error');
-      generating = false;
-      return;
+      addToastMessage('Failed to create WebRTC connection', 'error')
+      generating = false
+      return
     }
 
     connection.onicecandidate = async (event) => {
       if (!event.candidate && connection!.localDescription) {
-        await createOfferCode(connection!.localDescription);
-        generating = false;
+        await createOfferCode(connection!.localDescription)
+        generating = false
       }
-    };
+    }
 
     try {
       const offer = await connection.createOffer({
         offerToReceiveVideo: false,
         offerToReceiveAudio: false
-      });
-      await connection.setLocalDescription(offer);
+      })
+      await connection.setLocalDescription(offer)
 
       // stop waiting for ice candidates if longer than timeout
       setTimeout(async () => {
-        if (!connection?.localDescription || !generating) return;
-        addToastMessage('timeout waiting ICE candidates');
-        await createOfferCode(connection.localDescription);
-        generating = false;
-      }, waitIceCandidatesTimeout);
+        if (!connection?.localDescription || !generating) return
+        addToastMessage('timeout waiting ICE candidates')
+        await createOfferCode(connection.localDescription)
+        generating = false
+      }, waitIceCandidatesTimeout)
     } catch (error) {
-      console.error('Error generating offer:', error);
-      addToastMessage('Failed to generate offer', 'error');
-      generating = false;
+      console.error('Error generating offer:', error)
+      addToastMessage('Failed to generate offer', 'error')
+      generating = false
     }
   }
 
   async function copyOfferCode() {
     try {
-      await navigator.clipboard.writeText(offerCode);
-      addToastMessage('Copied to clipboard', 'info');
+      await navigator.clipboard.writeText(offerCode)
+      addToastMessage('Copied to clipboard', 'info')
     } catch (error) {
-      console.error('Failed to copy offer code:', error);
-      addToastMessage('Failed to copy offer code', 'error');
+      console.error('Failed to copy offer code:', error)
+      addToastMessage('Failed to copy offer code', 'error')
     }
   }
 
   async function acceptAnswer() {
     // Debugging log
-    debugAcceptAnswer();
+    debugAcceptAnswer()
 
     if (!answerCode.trim()) {
-      addToastMessage('Please enter an answer code', 'error');
-      return;
+      addToastMessage('Please enter an answer code', 'error')
+      return
     }
 
     try {
       // Validate the answer code structure first
-      let parsedCode;
+      let parsedCode
       try {
-        parsedCode = parseUniqueCode(answerCode);
+        parsedCode = parseUniqueCode(answerCode)
       } catch (parseError) {
-        addToastMessage('Invalid answer code format', 'error');
-        console.error('Parse error:', parseError);
-        return;
+        addToastMessage('Invalid answer code format', 'error')
+        console.error('Parse error:', parseError)
+        return
       }
 
-      const { sdp, publicKey } = parsedCode;
+      const { sdp, publicKey } = parsedCode
 
       // Ensure we have a valid connection before setting remote description
       if (!connection) {
-        addToastMessage('WebRTC connection not established', 'error');
-        return;
+        addToastMessage('WebRTC connection not established', 'error')
+        return
       }
 
       // Handle encryption key if needed
       if (sendOptions.isEncrypt && publicKey) {
         try {
-          rsaPub = await importRsaPublicKeyFromBase64(publicKey);
+          rsaPub = await importRsaPublicKeyFromBase64(publicKey)
         } catch (cryptoError) {
-          addToastMessage('Failed to import public key', 'error');
-          console.error('Crypto import error:', cryptoError);
-          return;
+          addToastMessage('Failed to import public key', 'error')
+          console.error('Crypto import error:', cryptoError)
+          return
         }
       }
 
@@ -236,105 +236,110 @@
       const remoteDesc: RTCSessionDescriptionInit = {
         type: 'answer',
         sdp: sdpDecode(sdp, false)
-      };
+      }
 
       // Add error handling for setRemoteDescription
       try {
-        await connection.setRemoteDescription(remoteDesc);
-        addToastMessage('Answer code accepted', 'success');
+        await connection.setRemoteDescription(remoteDesc)
+        addToastMessage('Answer code accepted', 'success')
       } catch (setDescError) {
-        addToastMessage('Failed to set remote description', 'error');
-        console.error('Set remote description error:', setDescError);
+        addToastMessage('Failed to set remote description', 'error')
+        console.error('Set remote description error:', setDescError)
       }
     } catch (error) {
-      addToastMessage('Unexpected error processing answer code', 'error');
-      console.error('Unexpected error:', error);
+      addToastMessage('Unexpected error processing answer code', 'error')
+      console.error('Unexpected error:', error)
     }
   }
 
   function onOptionsUpdate(options: SendOptions) {
-    sendOptions = options;
+    sendOptions = options
   }
 
- 
- function handleGoToAnswer() {
-  if (import.meta.env.DEV) {
-    // Development environment - use Electron IPC
-    if (window.electron && window.electron.openAnswer) {
-      window.electron.openAnswer();
+  function handleGoToAnswer() {
+    if (import.meta.env.DEV) {
+      // Development environment - use Electron IPC
+      if (window.electron && window.electron.openAnswer) {
+        window.electron.openAnswer()
+      } else {
+        console.error('Electron API not available')
+        // Fallback to same window navigation
+        window.location.href = '#/answer'
+      }
     } else {
-      console.error('Electron API not available');
-      // Fallback to same window navigation
-      window.location.href = '#/answer';
-    }
-  } else {
-    // Production environment - also use Electron IPC if available
-    if (window.electron && window.electron.openAnswer) {
-      window.electron.openAnswer();
-    } else {
-      // Web fallback
-      window.location.href = '#/answer';
+      // Production environment - also use Electron IPC if available
+      if (window.electron && window.electron.openAnswer) {
+        window.electron.openAnswer()
+      } else {
+        // Web fallback
+        window.location.href = '#/answer'
+      }
     }
   }
-}
 
   function handleInput(index: number, event: Event) {
-    const input = (event.target as HTMLInputElement).value.slice(-1); // only last char
-    answerCode = answerCode.padEnd(5, ' ').split('').map((c, i) => (i === index ? input : c)).join('');
+    const input = (event.target as HTMLInputElement).value.slice(-1) // only last char
+    answerCode = answerCode
+      .padEnd(5, ' ')
+      .split('')
+      .map((c, i) => (i === index ? input : c))
+      .join('')
   }
-  const isMobile = Capacitor.isNativePlatform();
-  let gPressed = false;
+  const isMobile = Capacitor.isNativePlatform()
+  let gPressed = false
 
   onMount(() => {
     const handleShortcut = (event: KeyboardEvent) => {
       if (event.ctrlKey && event.key.toLowerCase() == 'o') {
-        event.preventDefault();
-        generateOfferCode();
+        event.preventDefault()
+        generateOfferCode()
       } else if (isMobile) {
         if (event.key == 'Enter') {
-          event.preventDefault();
-          acceptAnswer();
+          event.preventDefault()
+          acceptAnswer()
         }
       } else if (event.ctrlKey && event.key.toLowerCase() == 'a') {
-        event.preventDefault();
-        acceptAnswer();
+        event.preventDefault()
+        acceptAnswer()
       } else if (event.key.toLowerCase() == 'g') {
-        gPressed = true;
+        gPressed = true
       } else if (gPressed && event.key.toLowerCase() == 'a') {
-        event.preventDefault();
-        window.location.href = '/answer.html';
+        event.preventDefault()
+        window.location.href = '/answer.html'
         //gPressed = false ;
       } else if (event.altKey && event.key == 's') {
-        event.preventDefault();
-        showOfferOptions = true;
+        event.preventDefault()
+        showOfferOptions = true
         // showOfferOptions.update(v => !v);
       } else if (event.ctrlKey && event.key.toLowerCase() == 'c') {
-        event.preventDefault();
-        copyOfferCode();
+        event.preventDefault()
+        copyOfferCode()
       } else if (event.ctrlKey && event.key.toLowerCase() === 'v') {
-        event.preventDefault();
+        event.preventDefault()
         navigator.clipboard
           .readText()
           .then((text) => {
-            answerCode = text; 
+            answerCode = text
           })
           .catch((error) => {
-            console.error('Failed to read clipboard contents: ', error);
-          });
+            console.error('Failed to read clipboard contents: ', error)
+          })
       } else {
-        gPressed = false;
+        gPressed = false
       }
-    };
+    }
 
-    window.addEventListener('keydown', handleShortcut);
+    window.addEventListener('keydown', handleShortcut)
 
     onDestroy(() => {
-      window.removeEventListener('keydown', handleShortcut);
-    });
-  });
+      window.removeEventListener('keydown', handleShortcut)
+    })
+  })
 </script>
 
+
 <div class="container mx-auto p-4 max-w-3xl">
+  
   <h1 class="text-2xl font-bold mb-4">File Transfer - Offer Page</h1>
 
   <Collapse title="1. Generate Offer" isOpen={!offerCode}>
@@ -366,26 +371,20 @@
             <button
               class="btn btn-secondary"
               onclick={() => {
-                showOfferOptions = true;
+                showOfferOptions = true
               }}>Settings <Cog /></button
             >
           {/if}
 
-    {#if import.meta.env.DEV}
-  <button
-    class="btn btn-dash btn-warning"
-    onclick={handleGoToAnswer}>
-    Go to Answer Page <ChevronsLeftRightEllipsis />
-  </button>
-{:else}
-  <button
-    class="btn btn-dash btn-warning"
-    onclick={handleGoToAnswer}>
-    Go to Answer Page <ChevronsLeftRightEllipsis />
-  </button>
-{/if}
-
-
+          {#if import.meta.env.DEV}
+            <button class="btn btn-dash btn-warning" onclick={handleGoToAnswer}>
+              Go to Answer Page <ChevronsLeftRightEllipsis />
+            </button>
+          {:else}
+            <button class="btn btn-dash btn-warning" onclick={handleGoToAnswer}>
+              Go to Answer Page <ChevronsLeftRightEllipsis />
+            </button>
+          {/if}
         </div>
       </div>
     {/if}
@@ -397,102 +396,113 @@
         Share this unique offer code with your peer. They will need to enter it on the Answer page.
       </p>
       <div class="mt-2 flex items-center justify-center gap-2 relative">
-  {#each offerCode.padEnd(5, ' ').split('').slice(0, 5) as char, i}
-  <div class="flex items-center">
-  <input 
-    type={showOfferCode ? 'text' : 'password'} 
-    class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-center text-sm sm:text-base md:text-xl border rounded-md shadow-sm transition-colors duration-200 input input-bordered focus:input-primary disabled:input-disabled" 
-    value={char} 
-    readonly 
-  />
-  {#if i < 4}
-    <span class="mx-1 sm:mx-2 opacity-60 select-none text-sm sm:text-base md:text-lg">‒</span>
-  {/if}
-</div>
-  {/each}
+        {#each offerCode.padEnd(5, ' ').split('').slice(0, 5) as char, i}
+          <div class="flex items-center">
+            <input
+              type={showOfferCode ? 'text' : 'password'}
+              class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-center text-sm sm:text-base md:text-xl border rounded-md shadow-sm transition-colors duration-200 input input-bordered focus:input-primary disabled:input-disabled"
+              value={char}
+              readonly
+            />
+            {#if i < 4}
+              <span class="mx-1 sm:mx-2 opacity-60 select-none text-sm sm:text-base md:text-lg"
+                >‒</span
+              >
+            {/if}
+          </div>
+        {/each}
 
-  <!-- Eye icon -->
- <div class="absolute top-1/2 right-1 sm:right-2 transform -translate-y-1/2 p-0.5 sm:p-1">
-  <Eye
-    onChange={(show) => {
-      showOfferCode = show;
-    }}
-  />
-</div>
-</div>
-
+        <!-- Eye icon -->
+        <div class="absolute top-1/2 right-1 sm:right-2 transform -translate-y-1/2 p-0.5 sm:p-1">
+          <Eye
+            onChange={(show) => {
+              showOfferCode = show
+            }}
+          />
+        </div>
+      </div>
 
       <div class="mt-4 flex gap-2">
         <button class="btn btn-dash btn-success" onclick={copyOfferCode}
-          >Copy Code <Clipboard /> </button
-        >
-        
-       
+          >Copy Code <Clipboard />
+        </button>
 
         <QrModal bind:this={qrModal} qrData={offerCode} title="Offer QR Code" />
       </div>
       <p class="mt-4">Enter the Answer Code from your peer to establish connection.</p>
-   
-<div class="relative mt-4 flex items-center justify-center gap-2">
-  {#each Array(5) as _, i}
-   <div class="flex items-center">
-  <input
-    type={showPassword ? 'text' : 'password'}
-    maxlength="1"
-    class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-center text-sm sm:text-base md:text-xl border rounded-md shadow-sm transition-colors duration-200 input input-bordered focus:input-primary"
-    value={answerCode[i] || ''}
-    oninput={(e) => handleInput(i, e)}
-  />
-  {#if i < 4}
-    <span class="mx-1 sm:mx-2 opacity-60 select-none text-sm sm:text-base md:text-lg">‒</span>
-  {/if}
-</div>
-  {/each}
 
- <!-- Toggle eye icon -->
-<button
-  type="button"
-  class="absolute top-1/2 transform -translate-y-1/2 right-1 sm:right-2 p-1 sm:p-1.5 rounded-md transition-colors duration-200 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-200 active:bg-gray-200 dark:hover:bg-gray-700 dark:focus:bg-gray-700 dark:focus:ring-blue-800 dark:active:bg-gray-600 touch-manipulation"
-  onclick={() => (showPassword = !showPassword)}
-  aria-label="Toggle password visibility"
-  onkeydown={(event) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      showPassword = !showPassword;
-    }
-  }}
+      <div class="relative mt-4 flex items-center justify-center gap-2">
+        {#each Array(5) as _, i}
+          <div class="flex items-center">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              maxlength="1"
+              class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-center text-sm sm:text-base md:text-xl border rounded-md shadow-sm transition-colors duration-200 input input-bordered focus:input-primary"
+              value={answerCode[i] || ''}
+              oninput={(e) => handleInput(i, e)}
+            />
+            {#if i < 4}
+              <span class="mx-1 sm:mx-2 opacity-60 select-none text-sm sm:text-base md:text-lg"
+                >‒</span
+              >
+            {/if}
+          </div>
+        {/each}
 
-  >
-    {#if showPassword}
-      <!-- Eye Open -->
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M15 12c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z" />
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M2.458 12C3.732 7.724 7.732 5 12 5c4.268 0 8.268 2.724 9.542 7-1.274 4.276-5.274 7-9.542 7-4.268 0-8.268-2.724-9.542-7z" />
-      </svg>
-    {:else}
-      <!-- Eye Closed -->
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path d="M17.94 17.94A10.944 10.944 0 0 1 12 19c-4.418 0-8.268-2.724-9.542-7a10.947 10.947 0 0 1 4.138-5.21" />
-        <path d="M1 1l22 22" />
-        <path d="M9.88 9.88a3 3 0 0 0 4.24 4.24" />
-        <path d="M21.54 12.53A10.944 10.944 0 0 0 12 5c-.706 0-1.394.07-2.053.203" />
-      </svg>
-    {/if}
-  </button>
-</div>
-
-
-
-
-
-
-
-
-
-
-
+        <!-- Toggle eye icon -->
+        <button
+          type="button"
+          class="absolute top-1/2 transform -translate-y-1/2 right-1 sm:right-2 p-1 sm:p-1.5 rounded-md transition-colors duration-200 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-200 active:bg-gray-200 dark:hover:bg-gray-700 dark:focus:bg-gray-700 dark:focus:ring-blue-800 dark:active:bg-gray-600 touch-manipulation"
+          onclick={() => (showPassword = !showPassword)}
+          aria-label="Toggle password visibility"
+          onkeydown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              showPassword = !showPassword
+            }
+          }}
+        >
+          {#if showPassword}
+            <!-- Eye Open -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6 text-gray-700 dark:text-gray-300"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 12c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z"
+              />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M2.458 12C3.732 7.724 7.732 5 12 5c4.268 0 8.268 2.724 9.542 7-1.274 4.276-5.274 7-9.542 7-4.268 0-8.268-2.724-9.542-7z"
+              />
+            </svg>
+          {:else}
+            <!-- Eye Closed -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6 text-gray-700 dark:text-gray-300"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                d="M17.94 17.94A10.944 10.944 0 0 1 12 19c-4.418 0-8.268-2.724-9.542-7a10.947 10.947 0 0 1 4.138-5.21"
+              />
+              <path d="M1 1l22 22" />
+              <path d="M9.88 9.88a3 3 0 0 0 4.24 4.24" />
+              <path d="M21.54 12.53A10.944 10.944 0 0 0 12 5c-.706 0-1.394.07-2.053.203" />
+            </svg>
+          {/if}
+        </button>
+      </div>
 
       <div class="mt-4 flex gap-2">
         <button class="btn btn-soft btn-warning" onclick={acceptAnswer}
@@ -500,8 +510,8 @@
         >
         <ScanQrModal
           onScanSuccess={(data) => {
-            answerCode = data;
-            acceptAnswer();
+            answerCode = data
+            acceptAnswer()
           }}
         />
       </div>
@@ -516,7 +526,7 @@
           <button
             class="btn btn-dash btn-secondary join-item w-1/2 text-xl py-4 min-h-[3.5rem] inline-flex items-center justify-center gap-x-2"
             onclick={() => {
-              sendMode = true;
+              sendMode = true
             }}
           >
             <Send />
@@ -537,8 +547,8 @@
               class:btn-ghost={sendMode}
               class:btn-primary={!sendMode}
               onclick={() => {
-                showNewFile = false;
-                sendMode = false;
+                showNewFile = false
+                sendMode = false
               }}
             >
               <HeartHandshake />

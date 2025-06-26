@@ -1,6 +1,9 @@
 import { app, shell, BrowserWindow, ipcMain, nativeTheme } from 'electron';
 import { join } from 'path';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
+import icon from '../../resources/icon.png?asset'
+
+const isDark = nativeTheme.shouldUseDarkColors
 
 let mainWindow: BrowserWindow | null = null;
 let answerWindow: BrowserWindow | null = null;
@@ -11,18 +14,20 @@ function createWindow(): void {
     height: 800,
     show: false,
     autoHideMenuBar: true,
-    titleBarStyle: 'hidden', // Custom title bar
+    titleBarStyle: 'hidden', 
     titleBarOverlay: {
-      color: nativeTheme.shouldUseDarkColors ? '#1e293b' : '#f8fafc',
-      symbolColor: nativeTheme.shouldUseDarkColors ? '#e2e8f0' : '#475569',
-      height: 32,
-    },
+    color: isDark ? '#0f172a' : '#f8fafc',        // very dark bg (slate-900)
+    symbolColor: isDark ? '#f1f5f9' : '#334155',  // light text (slate-100 / slate-700)
+    height: 32
+  },
+
+      ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false,
+      sandbox: true,
       contextIsolation: true,
       enableRemoteModule: false,
-      nodeIntegration: false,
+      nodeIntegration: true,
     },
   });
 
@@ -137,6 +142,22 @@ ipcMain.handle('get-theme', () => {
     themeSource: nativeTheme.themeSource,
   };
 });
+
+// main.ts
+ipcMain.handle('get-gtk-theme', () => {
+  if (process.platform !== 'linux') return null;
+  return nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+});
+
+// Watch for theme changes
+if (process.platform === 'linux') {
+  nativeTheme.on('updated', () => {
+    const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+    BrowserWindow.getAllWindows().forEach(win => {
+      win.webContents.send('gtk-theme-changed', theme);
+    });
+  });
+}
 
 // Window controls
 ipcMain.on('minimize-window', () => {
