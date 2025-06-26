@@ -4,7 +4,7 @@
   import { onMount } from 'svelte'
 
   let isDark = false
-  let appTitle = "My Electron App"
+  let appTitle = "Speed-share"
   let platform = window.electron?.platform || 'win32' // Default to win32 if not in Electron
 
   onMount(() => {
@@ -71,9 +71,9 @@
           {/if}
         </button>
         <div class="w-4 h-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-sm flex-shrink-0"></div>
-        <span class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-          {appTitle}
-        </span>
+      <span class="absolute left-1/2 transform -translate-x-1/2 text-base text-center font-semibold font-mono tracking-wide text-gray-800 dark:text-gray-200 pointer-events-none">
+  {appTitle}
+</span>
       </div>
     </div>
 
@@ -87,6 +87,8 @@
 <style>
   :global(html) {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    /* Enable smooth scrolling */
+    scroll-behavior: smooth;
   }
 
   .integrated-title-bar {
@@ -108,37 +110,113 @@
     -webkit-app-region: no-drag;
   }
 
+  /* Modern Minimalistic Scrollbar Styles */
+  
+  /* Hide scrollbars by default (overlay style) */
+  :global(*) {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  /* Webkit scrollbars - minimalistic design */
   :global(*::-webkit-scrollbar) {
-    width: 8px;
-    height: 8px;
+    width: 4px;
+    height: 4px;
   }
 
+  /* Track - completely transparent/hidden */
   :global(*::-webkit-scrollbar-track) {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 4px;
+    background: transparent;
+    border-radius: 0;
   }
 
-  :global(.dark *::-webkit-scrollbar-track) {
-    background: rgba(255, 255, 255, 0.1);
-  }
-
+  /* Thumb - ultra-thin, subtle, with 3D effect */
   :global(*::-webkit-scrollbar-thumb) {
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 4px;
+    background: linear-gradient(
+      135deg,
+      rgba(0, 0, 0, 0.08) 0%,
+      rgba(0, 0, 0, 0.12) 50%,
+      rgba(0, 0, 0, 0.08) 100%
+    );
+    border-radius: 2px;
+    border: none;
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 0 2px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    opacity: 0;
   }
 
+  /* Dark theme scrollbar thumb */
   :global(.dark *::-webkit-scrollbar-thumb) {
-    background: rgba(255, 255, 255, 0.3);
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.15) 50%,
+      rgba(255, 255, 255, 0.08) 100%
+    );
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 0 2px rgba(0, 0, 0, 0.3);
   }
 
+  /* Show scrollbar on hover */
+  :global(*:hover::-webkit-scrollbar-thumb) {
+    opacity: 1;
+  }
+
+  /* Thumb hover state - slightly more visible */
   :global(*::-webkit-scrollbar-thumb:hover) {
-    background: rgba(0, 0, 0, 0.5);
+    background: linear-gradient(
+      135deg,
+      rgba(0, 0, 0, 0.15) 0%,
+      rgba(0, 0, 0, 0.25) 50%,
+      rgba(0, 0, 0, 0.15) 100%
+    );
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
+      0 0 4px rgba(0, 0, 0, 0.2);
+    transform: scaleX(1.5);
+    opacity: 1;
   }
 
+  /* Dark theme thumb hover */
   :global(.dark *::-webkit-scrollbar-thumb:hover) {
-    background: rgba(255, 255, 255, 0.5);
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0.25) 50%,
+      rgba(255, 255, 255, 0.15) 100%
+    );
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 0 4px rgba(0, 0, 0, 0.4);
   }
 
+  /* Corner where scrollbars meet */
+  :global(*::-webkit-scrollbar-corner) {
+    background: transparent;
+  }
+
+  /* Special styling for specific elements that need visible scrollbars */
+  :global(.scrollable-content) {
+    scrollbar-width: thin;
+  }
+
+  :global(.scrollable-content::-webkit-scrollbar) {
+    width: 6px;
+    height: 6px;
+  }
+
+  :global(.scrollable-content::-webkit-scrollbar-thumb) {
+    opacity: 0.3;
+  }
+
+  :global(.scrollable-content:hover::-webkit-scrollbar-thumb) {
+    opacity: 0.6;
+  }
+
+  /* Focus styles */
   :global(*:focus-visible) {
     outline: 2px solid theme('colors.blue.500');
     outline-offset: 2px;
@@ -146,5 +224,15 @@
 
   :global(.dark *:focus-visible) {
     outline: 2px solid theme('colors.blue.400');
+  }
+
+  /* Custom scrollbar for specific components */
+  :global(.custom-scroll) {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+  }
+
+  :global(.dark .custom-scroll) {
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
   }
 </style>

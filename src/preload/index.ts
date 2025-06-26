@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer } from 'electron'
 
 const api = {
   platform: process.platform,
@@ -7,33 +7,28 @@ const api = {
   setTheme: (theme: 'light' | 'dark' | 'system') => ipcRenderer.invoke('set-theme', theme),
   getTheme: () => ipcRenderer.invoke('get-theme'),
   onThemeUpdated: (callback: (isDark: boolean) => void) => {
-    ipcRenderer.on('theme-updated', (_, isDark) => callback(isDark));
+    ipcRenderer.on('theme-updated', (_, isDark) => callback(isDark))
   },
   removeThemeListener: () => {
-    ipcRenderer.removeAllListeners('theme-updated');
-  },
-
-  // Desktop environment detection
-  getDesktopEnvironment: () => {
-    if (process.platform === 'linux') {
-      return process.env.XDG_CURRENT_DESKTOP || process.env.DESKTOP_SESSION || 'unknown';
-    }
-    return process.platform === 'win32' ? 'windows' : 'unknown';
+    ipcRenderer.removeAllListeners('theme-updated')
   },
 
   // Window controls
   minimizeWindow: () => ipcRenderer.send('minimize-window'),
   maximizeWindow: () => ipcRenderer.send('maximize-window'),
   closeWindow: () => ipcRenderer.send('close-window'),
-};
+
+  // Answer window
+  openAnswer: () => ipcRenderer.send('open-answer')
+}
 
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', api);
+    contextBridge.exposeInMainWorld('electron', api)
   } catch (error) {
-    console.error(error);
+    console.error(error)
   }
 } else {
   // @ts-ignore
-  window.electron = api;
+  window.electron = api
 }

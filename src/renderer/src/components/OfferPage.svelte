@@ -257,7 +257,26 @@
   }
 
  
- 
+ function handleGoToAnswer() {
+  if (import.meta.env.DEV) {
+    // Development environment - use Electron IPC
+    if (window.electron && window.electron.openAnswer) {
+      window.electron.openAnswer();
+    } else {
+      console.error('Electron API not available');
+      // Fallback to same window navigation
+      window.location.href = '#/answer';
+    }
+  } else {
+    // Production environment - also use Electron IPC if available
+    if (window.electron && window.electron.openAnswer) {
+      window.electron.openAnswer();
+    } else {
+      // Web fallback
+      window.location.href = '#/answer';
+    }
+  }
+}
 
   function handleInput(index: number, event: Event) {
     const input = (event.target as HTMLInputElement).value.slice(-1); // only last char
@@ -352,17 +371,18 @@
             >
           {/if}
 
-         {#if import.meta.env.DEV}
+    {#if import.meta.env.DEV}
   <button
     class="btn btn-dash btn-warning"
-    onclick={() => window.electron.ipcRenderer.send('open-answer')}>
+    onclick={handleGoToAnswer}>
     Go to Answer Page <ChevronsLeftRightEllipsis />
   </button>
-  {:else}
-    <a href="#/answer">  <button class="btn btn-dash btn-warning">
-            Go to Answer Page <ChevronsLeftRightEllipsis />
-            </button>
-        </a>
+{:else}
+  <button
+    class="btn btn-dash btn-warning"
+    onclick={handleGoToAnswer}>
+    Go to Answer Page <ChevronsLeftRightEllipsis />
+  </button>
 {/if}
 
 
