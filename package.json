@@ -25,6 +25,7 @@
     "@capacitor/filesystem": "^7.1.1",
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^4.0.0",
+    "@electron-uikit/titlebar": "^1.2.0",
     "@lucide/svelte": "^0.523.0",
     "@nuintun/qrcode": "^3.4.0",
     "@tailwindcss/postcss": "^4.1.10",

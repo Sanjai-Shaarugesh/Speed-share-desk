@@ -8,6 +8,7 @@
         "@capacitor/filesystem": "^7.1.1",
         "@electron-toolkit/preload": "^3.0.1",
         "@electron-toolkit/utils": "^4.0.0",
+        "@electron-uikit/titlebar": "^1.2.0",
         "@lucide/svelte": "^0.523.0",
         "@nuintun/qrcode": "^3.4.0",
         "@tailwindcss/postcss": "^4.1.10",
@@ -111,6 +112,8 @@
     "@electron-toolkit/tsconfig": ["@electron-toolkit/tsconfig@1.0.1", "", { "peerDependencies": { "@types/node": "*" } }, "sha512-M0Mol3odspvtCuheyujLNAW7bXq7KFNYVMRtpjFa4ZfES4MuklXBC7Nli/omvc+PRKlrklgAGx3l4VakjNo8jg=="],
 
     "@electron-toolkit/utils": ["@electron-toolkit/utils@4.0.0", "", { "peerDependencies": { "electron": ">=13.0.0" } }, "sha512-qXSntwEzluSzKl4z5yFNBknmPGjPa3zFhE4mp9+h0cgokY5ornAeP+CJQDBhKsL1S58aOQfcwkD3NwLZCl+64g=="],
+
+    "@electron-uikit/titlebar": ["@electron-uikit/titlebar@1.2.0", "", { "peerDependencies": { "@electron-uikit/core": "*", "electron": ">=15.0.0" }, "optionalPeers": ["@electron-uikit/core"] }, "sha512-qxPD+UydsSN9eZCasLLW6LCdf5E/mLMHpqjZiVSbjYIFZDD1UDBdoknnu/J4La5a7LhccjkihPRZdUhA0Le2cw=="],
 
     "@electron/asar": ["@electron/asar@3.4.1", "", { "dependencies": { "commander": "^5.0.0", "glob": "^7.1.6", "minimatch": "^3.0.4" }, "bin": { "asar": "bin/asar.js" } }, "sha512-i4/rNPRS84t0vSRa2HorerGRXWyF4vThfHesw0dmcWHp+cspK743UanA0suA5Q5y8kzY2y6YKrvbIUn69BCAiA=="],
 

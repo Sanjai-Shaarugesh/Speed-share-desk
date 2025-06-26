@@ -1,34 +1,39 @@
-import { contextBridge ,  ipcRenderer } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
+import { contextBridge, ipcRenderer } from 'electron';
 
+const api = {
+  platform: process.platform,
 
-// Custom APIs for renderer
-const api = {}
+  // Theme management
+  setTheme: (theme: 'light' | 'dark' | 'system') => ipcRenderer.invoke('set-theme', theme),
+  getTheme: () => ipcRenderer.invoke('get-theme'),
+  onThemeUpdated: (callback: (isDark: boolean) => void) => {
+    ipcRenderer.on('theme-updated', (_, isDark) => callback(isDark));
+  },
+  removeThemeListener: () => {
+    ipcRenderer.removeAllListeners('theme-updated');
+  },
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
-if (process.contextIsolated) { ipcRenderer
+  // Desktop environment detection
+  getDesktopEnvironment: () => {
+    if (process.platform === 'linux') {
+      return process.env.XDG_CURRENT_DESKTOP || process.env.DESKTOP_SESSION || 'unknown';
+    }
+    return process.platform === 'win32' ? 'windows' : 'unknown';
+  },
+
+  // Window controls
+  minimizeWindow: () => ipcRenderer.send('minimize-window'),
+  maximizeWindow: () => ipcRenderer.send('maximize-window'),
+  closeWindow: () => ipcRenderer.send('close-window'),
+};
+
+if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
-    contextBridge.exposeInMainWorld('api', api)
+    contextBridge.exposeInMainWorld('electron', api);
   } catch (error) {
-    console.error(error)
+    console.error(error);
   }
 } else {
-  // @ts-ignore (define in dts)
-  window.electron = electronAPI
-  // @ts-ignore (define in dts)
-  window.api = api
+  // @ts-ignore
+  window.electron = api;
 }
-
-
-contextBridge.exposeInMainWorld('electron', {
-  ipcRenderer: {
-    send: (channel: string, data: any) => ipcRenderer.send(channel, data),
-    on: (channel: string, callback: (event: any, ...args: any[]) => void) => {
-      ipcRenderer.on(channel, callback);
-    },
-    invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args),
-  }
-});

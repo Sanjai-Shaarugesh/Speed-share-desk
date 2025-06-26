@@ -1,155 +1,56 @@
+// tailwind.config.js
 /** @type {import('tailwindcss').Config} */
-
-module.exports = {
-  content: ['./src/renderer/index.html', './src/renderer/src/**/*.{svelte,js,ts,jsx,tsx}'],
-
+export default {
+  content: ['./src/renderer/src/**/*.{html,js,svelte,ts}'],
+  darkMode: 'class',
   theme: {
     extend: {
-      // Enhanced backdrop blur values
-      backdropBlur: {
-        'xs': '2px',
-        'sm': '4px',
-        'md': '8px',
-        'lg': '12px',
-        'xl': '16px',
-        '2xl': '24px',
-        '3xl': '32px',
-      },
-      
-      // Glass morphism specific backdrop saturate
-      backdropSaturate: {
-        '125': '1.25',
-        '150': '1.5',
-        '175': '1.75',
-        '200': '2',
-      },
-      
-      // Enhanced backdrop brightness for glass effects
-      backdropBrightness: {
-        '25': '.25',
-        '50': '.5',
-        '75': '.75',
-        '90': '.9',
-        '95': '.95',
-        '105': '1.05',
-        '110': '1.1',
-        '125': '1.25',
-      },
-      
-      // Custom glass box shadows
-      boxShadow: {
-        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-        'glass-dark': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
-        'glass-lg': '0 25px 50px -12px rgba(31, 38, 135, 0.25)',
-        'glass-xl': '0 35px 60px -12px rgba(31, 38, 135, 0.3)',
-        'frost': '0 4px 16px 0 rgba(255, 255, 255, 0.1)',
-        'frost-dark': '0 4px 16px 0 rgba(0, 0, 0, 0.3)',
-      },
-      
-      // Glass morphism specific colors with transparency
       colors: {
-        'glass': {
-          'white': 'rgba(255, 255, 255, 0.25)',
-          'white-light': 'rgba(255, 255, 255, 0.1)',
-          'white-medium': 'rgba(255, 255, 255, 0.2)',
-          'white-strong': 'rgba(255, 255, 255, 0.4)',
-          'black': 'rgba(0, 0, 0, 0.25)',
-          'black-light': 'rgba(0, 0, 0, 0.1)',
-          'black-medium': 'rgba(0, 0, 0, 0.2)',
-          'black-strong': 'rgba(0, 0, 0, 0.4)',
-        }
+        // Adwaita-inspired color palette
+        primary: {
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e40af',
+          900: '#1e3a8a',
+        },
       },
-      
-      // Animation for 3D effects
+      fontFamily: {
+        sans: [
+          'Inter',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'Roboto',
+          'Oxygen',
+          'Ubuntu',
+          'Cantarell',
+          'Fira Sans',
+          'Droid Sans',
+          'Helvetica Neue',
+          'sans-serif'
+        ]
+      },
       animation: {
-        'float': 'float 3s ease-in-out infinite',
-        'glass-shimmer': 'glass-shimmer 2s ease-in-out infinite alternate',
+        'fade-in': 'fadeIn 0.2s ease-in-out',
+        'slide-up': 'slideUp 0.2s ease-out',
       },
-      
       keyframes: {
-        'float': {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-2px)' },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
         },
-        'glass-shimmer': {
-          '0%': { 
-            'background-position': '-200% 0',
-            'opacity': '0.8'
-          },
-          '100%': { 
-            'background-position': '200% 0',
-            'opacity': '1'
-          },
-        }
+        slideUp: {
+          '0%': { transform: 'translateY(10px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
       },
-      
-      // Custom gradients for glass effects
-      backgroundImage: {
-        'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0))',
-        'glass-gradient-dark': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.1))',
-        'frost-gradient': 'linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05))',
-        'frost-gradient-dark': 'linear-gradient(145deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.05))',
-      },
-    }
+    },
   },
-
-  plugins: [
-    // Custom plugin for glass morphism utilities
-    function({ addUtilities, theme }) {
-      const glassUtilities = {
-        '.glass': {
-          background: 'rgba(255, 255, 255, 0.25)',
-          'backdrop-filter': 'blur(4px) saturate(180%)',
-          '-webkit-backdrop-filter': 'blur(4px) saturate(180%)',
-          border: '1px solid rgba(255, 255, 255, 0.18)',
-          'box-shadow': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-        },
-        '.glass-dark': {
-          background: 'rgba(0, 0, 0, 0.25)',
-          'backdrop-filter': 'blur(4px) saturate(180%)',
-          '-webkit-backdrop-filter': 'blur(4px) saturate(180%)',
-          border: '1px solid rgba(255, 255, 255, 0.125)',
-          'box-shadow': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
-        },
-        '.frost': {
-          background: 'rgba(255, 255, 255, 0.1)',
-          'backdrop-filter': 'blur(8px) saturate(150%)',
-          '-webkit-backdrop-filter': 'blur(8px) saturate(150%)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-        },
-        '.frost-dark': {
-          background: 'rgba(0, 0, 0, 0.1)',
-          'backdrop-filter': 'blur(8px) saturate(150%)',
-          '-webkit-backdrop-filter': 'blur(8px) saturate(150%)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-        },
-        '.glass-button': {
-          background: 'linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05))',
-          'backdrop-filter': 'blur(8px) saturate(150%)',
-          '-webkit-backdrop-filter': 'blur(8px) saturate(150%)',
-          border: '1px solid rgba(255, 255, 255, 0.3)',
-          'box-shadow': '0 4px 16px 0 rgba(255, 255, 255, 0.1)',
-          transition: 'all 0.2s ease',
-          '&:hover': {
-            transform: 'translateY(-1px)',
-            'box-shadow': '0 8px 25px 0 rgba(255, 255, 255, 0.2)',
-          }
-        },
-        '.glass-button-dark': {
-          background: 'linear-gradient(145deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.05))',
-          'backdrop-filter': 'blur(8px) saturate(150%)',
-          '-webkit-backdrop-filter': 'blur(8px) saturate(150%)',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
-          'box-shadow': '0 4px 16px 0 rgba(0, 0, 0, 0.3)',
-          transition: 'all 0.2s ease',
-          '&:hover': {
-            transform: 'translateY(-1px)',
-            'box-shadow': '0 8px 25px 0 rgba(0, 0, 0, 0.4)',
-          }
-        }
-      };
-
-      addUtilities(glassUtilities);
-    }
-  ]
+  plugins: [],
 }
