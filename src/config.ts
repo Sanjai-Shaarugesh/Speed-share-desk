@@ -1,6 +1,6 @@
 import type { ReceiveOptions, SendOptions } from './type';
 
-// Diverse STUN and TURN servers for robust connectivity
+// Added more diverse STUN servers for better connectivity
 export const stunServers: string[] = [
   'stun:stun.l.google.com:19302',
   'stun:stun.l.google.com:19305',
@@ -9,7 +9,7 @@ export const stunServers: string[] = [
   'stun:stun.sipgate.net:3478',
   'stun:stun.sipgate.net:10000',
   'stun:stun.nextcloud.com:3478',
-  'stun:stun.nextcloud.com:443',
+  'stun:stun.nextcloud.com:443', // Added TURN servers for fallback when STUN fails in restrictive networks
   'stun:stun.myvoipapp.com:3478',
   'stun:stun.voipstunt.com:3478',
   'turn:numb.viagenie.ca:3478',
@@ -20,48 +20,47 @@ export const pageDescription =
   'A client-side secure P2P file sharing app optimized for low-bandwidth conditions.';
 export const githubLink = 'https://github.com/Sanjai-Shaarugesh/Speed-share';
 
-// Default send options optimized for large file transfers
 export const defaultSendOptions: SendOptions = {
   chunkSize: 250 * 1024,
   isEncrypt: true,
   iceServer: stunServers[0],
-  wasmBufferSize: 10000000 * 1024, // ~10GB buffer for large files
-  parallelChunks: 20,
+  wasmBufferSize: 10000000 * 1024,
+  parallelChunks: 20, // Fewer parallel chunks for lower bandwidth environments
   useStreaming: true,
-  compressionLevel: 20, // Max compression for data reduction
+  compressionLevel: 20,
   adaptiveChunking: true,
-  retryAttempts: 3,
-  priorityQueueing: true,
+  retryAttempts: 3, // Auto-retry failed chunks
+  priorityQueueing: true, // Prioritize metadata and small files
   retryStrategy: 'exponential',
   onProgress: (progress: number) => {},
   signal: AbortSignal.timeout(30000),
   timeout: 30000
 };
 
-// Receive options tailored for low network conditions
+// Optimized receive options for low network conditions
 export const defaultReceiveOptions: ReceiveOptions = {
   autoAccept: true,
-  maxSize: 1000 * 1024 * 1024 * 1024, // 1TB max size
-  receiverBufferSize: 10000000 * 1024, // Corrected to 10GB
+  maxSize: 1000 * 1024 * 1024 * 1024,
+  receiverBufferSize: 10000000 * 1024 * 1024,
   useStreaming: true,
   decompressInBackground: true,
-  chunkTimeout: 10000,
-  preallocateStorage: true,
-  progressInterval: 1000,
+  chunkTimeout: 10000, // Longer timeout for slow networks
+  preallocateStorage: true, // Preallocate storage for better performance
+  progressInterval: 1000, // Progress update interval in ms
   useBinaryMode: true,
   prioritizeDownload: true
 };
 
-export const waitIceCandidatesTimeout = 10000; // Extended for slow networks
+export const waitIceCandidatesTimeout = 5000; // Increased timeout for slow network discovery
 
 let wasmModule: WebAssembly.Module | null = null;
 let wasmInstance: WebAssembly.Instance | null = null;
 let wasmMemory: WebAssembly.Memory | null = null;
 
-// Load WebAssembly module for efficient compression
 async function loadWasm() {
   if (!wasmModule) {
     try {
+      // Try to load from cache first
       const cache = await caches.open('wasm-cache');
       let response = await cache.match('/wasm/fileProcessor.wasm');
 
@@ -74,62 +73,83 @@ async function loadWasm() {
       const buffer = await response.arrayBuffer();
       wasmModule = await WebAssembly.compile(buffer);
     } catch (error) {
-      console.error('WASM loading failed, falling back to JS', error);
+      console.error('WASM loading failed, falling back to JS implementation', error);
       return null;
     }
   }
   return wasmModule;
 }
 
-// Process file chunks with WASM for compression
 export async function processFileChunk(chunk: Uint8Array): Promise<Uint8Array> {
   try {
     const module = await loadWasm();
-    if (!module) return processFileChunkFallback(chunk);
+    if (!module) {
+      return processFileChunkFallback(chunk);
+    }
 
     if (!wasmInstance) {
       wasmMemory = new WebAssembly.Memory({ initial: 10, maximum: 100 });
       wasmInstance = await WebAssembly.instantiate(module, {
-        env: { memory: wasmMemory, abort: () => console.error('WASM aborted') }
+        env: {
+          memory: wasmMemory,
+          abort: () => console.error('WASM aborted')
+        }
       });
     }
 
-    const { processChunk } = wasmInstance.exports as { processChunk: (ptr: number, len: number) => number };
+    const { processChunk } = wasmInstance.exports as {
+      processChunk: (ptr: number, len: number) => number;
+    };
     const memory = wasmMemory as WebAssembly.Memory;
 
-    const requiredBytes = chunk.length + 1024;
+    // Check if we need to grow memory
+    const requiredBytes = chunk.length + 1024; // Add some padding
     const currentPages = memory.buffer.byteLength / 65536;
     const requiredPages = Math.ceil(requiredBytes / 65536);
 
-    if (currentPages < requiredPages) memory.grow(requiredPages - currentPages);
+    if (currentPages < requiredPages) {
+      memory.grow(requiredPages - currentPages);
+    }
 
+    // Process the chunk
     const memoryBuffer = new Uint8Array(memory.buffer);
-    const ptr = 1024;
+    const ptr = 1024; // Start at offset to avoid any header data
     memoryBuffer.set(chunk, ptr);
 
     const newSize = processChunk(ptr, chunk.length);
     return memoryBuffer.slice(ptr, ptr + newSize);
   } catch (error) {
-    console.warn('WASM failed, using JS fallback', error);
+    console.warn('WASM processing failed, using JS fallback', error);
     return processFileChunkFallback(chunk);
   }
 }
 
-// Fallback for chunk processing
+// JavaScript fallback implementation when WebAssembly fails
 function processFileChunkFallback(chunk: Uint8Array): Uint8Array {
-  return chunk; // Simplified; real impl should mimic WASM compression
+  // Simple processing for fallback - in real implementation,
+  // this would mirror the WASM functionality
+  return chunk;
 }
 
-// Detect network quality for adaptive settings
-export async function detectNetworkQuality(): Promise<{ bandwidth: number; latency: number; reliability: number }> {
+// New adaptive network quality detection by sanjai own method 😆
+export async function detectNetworkQuality(): Promise<{
+  bandwidth: number;
+  latency: number;
+  reliability: number;
+}> {
   try {
     const startTime = performance.now();
-    const response = await fetch('https://www.cloudflare.com/cdn-cgi/trace', { method: 'GET', cache: 'no-store' });
+    const response = await fetch('https://www.cloudflare.com/cdn-cgi/trace', {
+      method: 'GET',
+      cache: 'no-store'
+    });
+
     const endTime = performance.now();
     const latency = endTime - startTime;
+
     const text = await response.text();
     const size = text.length;
-    const bandwidth = size / (latency / 1000);
+    const bandwidth = size / (latency / 1000); // bytes per second
 
     return {
       bandwidth,
@@ -137,88 +157,91 @@ export async function detectNetworkQuality(): Promise<{ bandwidth: number; laten
       reliability: latency < 200 ? 1.0 : latency < 500 ? 0.7 : 0.4
     };
   } catch (error) {
-    console.warn('Network detection failed', error);
-    return { bandwidth: 10 * 1024, latency: 800, reliability: 0.3 };
+    console.warn('Network quality detection failed', error);
+    return {
+      bandwidth: 10 * 1024, // Assume very low bandwidth (10 KB/s)  😆  eg:india with low network connection
+      latency: 800, // Assume high latency
+      reliability: 0.3 // Assume poor reliability
+    };
   }
 }
 
-// Optimize transfer settings based on network
+// New function to optimize transfer parameters based on network conditions i may think this will work sanjai will only know's 😆
 export async function optimizeTransferSettings(options: SendOptions): Promise<SendOptions> {
   const networkQuality = await detectNetworkQuality();
+
   const optimized = { ...options };
 
   if (networkQuality.bandwidth < 50 * 1024) {
     optimized.chunkSize = 4 * 1024;
     optimized.parallelChunks = 1;
-    optimized.compressionLevel = 20; // Max compression for low bandwidth
+    optimized.compressionLevel = 9; // Max compression
   } else if (networkQuality.bandwidth < 200 * 1024) {
     optimized.chunkSize = 8 * 1024;
     optimized.parallelChunks = 2;
-    optimized.compressionLevel = 15;
+    optimized.compressionLevel = 9;
   } else if (networkQuality.bandwidth < 1024 * 1024) {
     optimized.chunkSize = 16 * 1024;
     optimized.parallelChunks = 3;
-    optimized.compressionLevel = 10;
+    optimized.compressionLevel = 7;
   } else {
+    // Good bandwidth, use original settings or even higher
     optimized.chunkSize = 64 * 1024;
     optimized.parallelChunks = 4;
-    optimized.compressionLevel = 5;
+    optimized.compressionLevel = 6;
   }
 
-  if (networkQuality.latency > 300) optimized.parallelChunks = Math.max(2, optimized.parallelChunks);
+  // Adjust for latency
+  if (networkQuality.latency > 300) {
+    optimized.parallelChunks = Math.max(2, optimized.parallelChunks); // Increase parallel chunks to overcome latency
+  }
 
   return optimized;
 }
 
-// Create reliable data channel with retries
-export async function createReliableDataChannel(peerConnection: RTCPeerConnection, label: string, maxRetries = 3): Promise<RTCDataChannel> {
+// Connection retry mechanism
+export async function createReliableDataChannel(
+  peerConnection: RTCPeerConnection,
+  label: string,
+  maxRetries = 3
+): Promise<RTCDataChannel> {
   let retries = 0;
+
   while (retries < maxRetries) {
     try {
-      const dataChannel = peerConnection.createDataChannel(label, { ordered: true, maxRetransmits: 10 });
-      await new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('Data channel timeout')), 5000);
-        dataChannel.onopen = () => { clearTimeout(timeout); resolve(); };
-        dataChannel.onerror = (error) => { clearTimeout(timeout); reject(error); };
+      const dataChannel = peerConnection.createDataChannel(label, {
+        ordered: true,
+        maxRetransmits: 10
       });
+
+      // Wait for channel to open
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Data channel open timeout'));
+        }, 5000);
+
+        dataChannel.onopen = () => {
+          clearTimeout(timeout);
+          resolve();
+        };
+
+        dataChannel.onerror = (error) => {
+          clearTimeout(timeout);
+          reject(error);
+        };
+      });
+
       return dataChannel;
     } catch (error) {
       retries++;
-      if (retries >= maxRetries) throw error;
+      if (retries >= maxRetries) {
+        throw error;
+      }
+
+      // Exponential backoff
       await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, retries)));
     }
   }
-  throw new Error('Failed to create data channel');
+
+  throw new Error('Failed to create data channel after max retries');
 }
-
-// Main file transfer function
-export async function sendFile(file: File, peerConnection: RTCPeerConnection) {
-  const options = await optimizeTransferSettings(defaultSendOptions);
-  const dataChannel = await createReliableDataChannel(peerConnection, 'fileTransfer');
-  let offset = 0;
-  const fileSize = file.size;
-  const reader = new FileReader();
-
-  dataChannel.onopen = async () => {
-    while (offset < fileSize) {
-      const chunk = file.slice(offset, offset + options.chunkSize);
-      reader.readAsArrayBuffer(chunk);
-      await new Promise((resolve) => (reader.onload = resolve));
-      const buffer = reader.result as ArrayBuffer;
-      const compressedChunk = await processFileChunk(new Uint8Array(buffer));
-      dataChannel.send(compressedChunk);
-      offset += options.chunkSize;
-      options.onProgress(offset / fileSize * 100);
-    }
-    dataChannel.close();
-  };
-}
-
-// example usange by sanjai 👻
-// // Example usage
-// async function example() {
-//   const peerConnection = new RTCPeerConnection({ iceServers: [{ urls: stunServers }] });
-//   const file = new File([new ArrayBuffer(10 * 1024 * 1024 * 1024)], 'example.bin'); // 10GB dummy file
-//   await sendFile(file, peerConnection);
-// }
-// example().catch(console.error);
