@@ -15,6 +15,7 @@
     isDark = mediaQuery.matches
     updateTheme(isDark)
 
+
     const handleSystemThemeChange = (e) => {
       isDark = e.matches
       updateTheme(isDark)
