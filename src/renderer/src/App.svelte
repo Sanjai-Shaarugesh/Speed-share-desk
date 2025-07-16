@@ -3,6 +3,7 @@
   import routes from './routes'
   import { onMount } from 'svelte'
   import Shortcuts from './components/shortcuts.svelte';
+  import icon2 from '../../../resources/icon2.webp?asset'
 
   let isDark = false
   let appTitle = "Speed-share"
@@ -80,7 +81,7 @@
             </svg>
           {/if}
         </button>
-        
+
         <!-- Info Button -->
         <button
           on:click={toggleDeveloperInfo}
@@ -91,8 +92,13 @@
             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
           </svg>
         </button>
-        
-        <div class="w-4 h-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-sm flex-shrink-0"></div>
+
+        <img
+          src={icon2}
+          alt="icon"
+          class="w-4 h-4 rounded-full flex-shrink-0 object-cover"
+        />
+
         <span class="absolute left-1/2 transform -translate-x-1/2 text-base text-center font-semibold font-mono tracking-wide text-gray-800 dark:text-gray-200 pointer-events-none text-lg md:text-xl font-bold animate-pulse">
           {appTitle}
         </span>
@@ -119,47 +125,46 @@
               </svg>
             </button>
           </div>
-          
+
           <div class="space-y-4">
             <div class="text-center">
-              <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-3 flex items-center justify-center">
-                <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+              <div class="w-16 h-16 rounded-full mx-auto mb-3 overflow-hidden">
+                <img src={icon2} alt="Logo" class="w-full h-full object-cover" />
               </div>
+
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Speed-share</h3>
               <p class="text-sm text-gray-600 dark:text-gray-400">Version 1.0.0</p>
             </div>
-            
+
             <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
               <div class="space-y-3">
                 <div>
                   <h4 class="text-sm font-medium text-gray-900 dark:text-white">Developer</h4>
                   <p class="text-sm text-gray-600 dark:text-gray-400">Sanjai-Shaarugesh</p>
                 </div>
-                
+
                 <div>
                   <h4 class="text-sm font-medium text-gray-900 dark:text-white">Contact</h4>
                   <p class="text-sm text-gray-600 dark:text-gray-400">shaarugesh6@gmail.com</p>
                 </div>
-                
+
                 <div>
                    <h4 class="text-sm font-medium text-gray-900 dark:text-white">Support the development:</h4>
-                
+
 
 <a href="https://buymeacoffee.com/sanjai" target="_blank">
   <img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee">
 </a>
 
                 </div>
-                
+
                 <div>
                   <h4 class="text-sm font-medium text-gray-900 dark:text-white">Description</h4>
                   <p class="text-sm text-gray-600 dark:text-gray-400">A fast and secure file sharing application with modern UI and cross-platform support.</p>
                 </div>
               </div>
             </div>
-            
+
             <div class="border-t border-gray-200 dark:border-gray-700 pt-4 flex justify-center space-x-4">
               <a href="#" class="text-blue-500 hover:text-blue-600 text-sm font-medium transition-colors">
                 GitHub
@@ -211,7 +216,7 @@
   }
 
   /* Modern Minimalistic Scrollbar Styles */
-  
+
   /* Hide scrollbars by default (overlay style) */
   :global(*) {
     scrollbar-width: none; /* Firefox */
@@ -240,7 +245,7 @@
     );
     border-radius: 2px;
     border: none;
-    box-shadow: 
+    box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.1),
       0 0 2px rgba(0, 0, 0, 0.1);
     transition: all 0.2s ease;
@@ -255,7 +260,7 @@
       rgba(255, 255, 255, 0.15) 50%,
       rgba(255, 255, 255, 0.08) 100%
     );
-    box-shadow: 
+    box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.05),
       0 0 2px rgba(0, 0, 0, 0.3);
   }
@@ -273,7 +278,7 @@
       rgba(0, 0, 0, 0.25) 50%,
       rgba(0, 0, 0, 0.15) 100%
     );
-    box-shadow: 
+    box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.15),
       0 0 4px rgba(0, 0, 0, 0.2);
     transform: scaleX(1.5);
@@ -288,7 +293,7 @@
       rgba(255, 255, 255, 0.25) 50%,
       rgba(255, 255, 255, 0.15) 100%
     );
-    box-shadow: 
+    box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.1),
       0 0 4px rgba(0, 0, 0, 0.4);
   }
