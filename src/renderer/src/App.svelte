@@ -143,6 +143,7 @@
                   <p class="text-sm text-gray-600 dark:text-gray-400">Sanjai-Shaarugesh</p>
                 </div>
 
+
                 <div>
                   <h4 class="text-sm font-medium text-gray-900 dark:text-white">Contact</h4>
                   <p class="text-sm text-gray-600 dark:text-gray-400">shaarugesh6@gmail.com</p>
