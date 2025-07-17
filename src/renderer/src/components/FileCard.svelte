@@ -10,6 +10,7 @@
   let progress = 0;
   let error: string | null = null;
 
+
   type Props = {
     fileDetail: FileDetail;
     isSender: boolean;
