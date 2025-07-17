@@ -250,7 +250,7 @@ function handlePaste(event: ClipboardEvent) {
         <ScanQrModal onScanSuccess={scanOfferCode} />
       </div>
       <div class="mt-4 flex gap-2">
-        <a href="/" data-navigo>
+        <a href="#/" data-navigo>
           <button class="btn btn-dash btn-warning" onclick={navigateToOfferPage}
             >Go to Offer Page <CircleArrowOutUpLeft /></button
           ></a

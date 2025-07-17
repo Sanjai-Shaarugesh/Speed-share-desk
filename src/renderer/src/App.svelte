@@ -4,6 +4,7 @@
   import { onMount } from 'svelte'
   import Shortcuts from './components/shortcuts.svelte';
   import icon2 from '../../../resources/icon2.webp?asset'
+  import Refresh from './components/Refresh.svelte';
 
   let isDark = false
   let appTitle = "Speed-share"
@@ -68,7 +69,7 @@
     <div class="integrated-title-bar absolute top-0 left-0 right-0 h-8 flex items-center px-4 select-none drag-region z-50 {platform === 'darwin' ? 'pl-20' : ''}">
       <div class="flex items-center space-x-2 no-drag">
         <button
-          on:click={toggleTheme}
+          onclick={toggleTheme}
           class="p-1 rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 backdrop-blur-sm"
           title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
         >
@@ -85,7 +86,7 @@
 
         <!-- Info Button -->
         <button
-          on:click={toggleDeveloperInfo}
+          onclick={toggleDeveloperInfo}
           class="p-1 rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 backdrop-blur-sm"
           title="Developer Information"
         >
@@ -108,8 +109,8 @@
 
     <!-- Developer Info Modal -->
     {#if showDeveloperInfo}
-      <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] no-drag" on:click={closeDeveloperInfo}>
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-6 mx-4 max-w-md w-full border border-gray-200 dark:border-gray-700" on:click|stopPropagation>
+      <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] no-drag" onclick={closeDeveloperInfo}>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-6 mx-4 max-w-md w-full border border-gray-200 dark:border-gray-700" >
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center">
               <svg class="w-5 h-5 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
@@ -118,7 +119,7 @@
               Developer Info
             </h2>
             <button
-              on:click={closeDeveloperInfo}
+              onclick={closeDeveloperInfo}
               class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -189,6 +190,8 @@
       <Shortcuts/>
     </div>
   </div>
+
+  <Refresh/>
 </main>
 
 <style>

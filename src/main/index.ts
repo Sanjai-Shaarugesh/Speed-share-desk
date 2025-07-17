@@ -14,7 +14,7 @@ function createWindow(): void {
     height: 800,
     show: false,
     autoHideMenuBar: true,
-    titleBarStyle: 'hidden', 
+    titleBarStyle: 'hidden',
     titleBarOverlay: {
     color: isDark ? '#0f172a' : '#f8fafc',        // very dark bg (slate-900)
     symbolColor: isDark ? '#f1f5f9' : '#334155',  // light text (slate-100 / slate-700)
@@ -23,7 +23,7 @@ function createWindow(): void {
 
       ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
+      preload: join(__dirname, '../preload/index.ts'),
       sandbox: true,
       contextIsolation: true,
       enableRemoteModule: false,
@@ -115,11 +115,11 @@ function createAnswerWindow(): void {
     // In development, load with hash route
     answerWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}#/answer`);
   } else {
-  
-    answerWindow.loadFile(join(__dirname, '../renderer/index.html'));
-    
 
-    
+    answerWindow.loadFile(join(__dirname, '../renderer/index.html'));
+
+
+
     // After loading, navigate to answer route
     answerWindow.webContents.once('did-finish-load', () => {
       answerWindow?.webContents.executeJavaScript(`
