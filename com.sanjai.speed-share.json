@@ -1,0 +1,70 @@
+{
+  "app-id": "com.sanjai.speed-share",
+  "runtime": "org.freedesktop.Platform",
+  "runtime-version": "23.08",
+  "sdk": "org.freedesktop.Sdk",
+  "base": "org.electronjs.Electron2.BaseApp",
+  "base-version": "23.08",
+  "command": "launch-app.sh",
+  "finish-args": [
+    "--share=ipc",
+    "--share=network",
+    "--socket=x11",
+    "--socket=wayland",
+    "--socket=pulseaudio",
+    "--device=dri",
+    "--filesystem=home"
+  ],
+  "modules": [
+    {
+      "name": "node",
+      "buildsystem": "simple",
+      "build-commands": [
+        "install -d /app/node",
+        "cp -r * /app/node"
+      ],
+      "sources": [
+        {
+          "type": "archive",
+          "url": "https://nodejs.org/dist/v18.20.3/node-v18.20.3-linux-x64.tar.xz",
+          "sha256": "ffd6147c263b81016742dc1e72dc68885a3ca9b441d9744f9b76cad362d0cc5f"
+        }
+
+      ]
+    },
+    {
+      "name": "speed-share-source",
+      "buildsystem": "simple",
+      "build-commands": [
+        "export PATH=/app/node/bin:$PATH",
+        "npm install",
+        "npm run build",
+        "npx electron-builder --linux dir"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "url": "https://github.com/Sanjai-Shaarugesh/Speed-share-desk",
+          "branch": "master"
+        }
+      ]
+    },
+    {
+      "name": "speed-share-bin",
+      "buildsystem": "simple",
+      "build-commands": [
+        "mkdir -p /app/bin",
+        "cp -r * /app/bin/",
+        "echo '#!/bin/sh' > /app/bin/launch-app.sh",
+        "echo 'exec /app/bin/speed-share' >> /app/bin/launch-app.sh",
+        "chmod +x /app/bin/launch-app.sh"
+      ],
+      "sources": [
+        {
+          "type": "dir",
+          "path": "dist/linux-unpacked"
+        }
+      ]
+    }
+  ]
+}
