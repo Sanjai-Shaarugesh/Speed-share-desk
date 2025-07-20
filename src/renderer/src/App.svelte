@@ -3,8 +3,10 @@
   import routes from './routes'
   import { onMount } from 'svelte'
   import Shortcuts from './components/shortcuts.svelte';
-  import icon2 from '../../../resources/icon2.webp?asset'
+  import icon2 from '../../../resources/icon2.webp?asset';
   import Refresh from './components/Refresh.svelte';
+  import Footer from './components/Footer.svelte';
+   import { githubLink , supportEmail, websiteLink } from '../../config';
 
   let isDark = false
   let appTitle = "Speed-share"
@@ -169,15 +171,21 @@
             </div>
 
             <div class="border-t border-gray-200 dark:border-gray-700 pt-4 flex justify-center space-x-4">
-              <a href="#" class="text-blue-500 hover:text-blue-600 text-sm font-medium transition-colors">
+              <a href={githubLink}  target="_blank" class="text-blue-500 hover:text-blue-600 text-sm font-medium transition-colors">
                 GitHub
               </a>
-              <a href="#" class="text-blue-500 hover:text-blue-600 text-sm font-medium transition-colors">
+              <a href={websiteLink}  target="_blank" class="text-blue-500 hover:text-blue-600 text-sm font-medium transition-colors">
                 Website
               </a>
-              <a href="#" class="text-blue-500 hover:text-blue-600 text-sm font-medium transition-colors">
+              <a
+                href={`mailto:${supportEmail}`}
+                class="text-blue-500 hover:text-blue-600 text-sm font-medium transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 Support
               </a>
+
             </div>
           </div>
         </div>
@@ -189,10 +197,12 @@
       <Router {routes} />
       <Shortcuts/>
     </div>
+     <Footer/>
   </div>
 
   <Refresh/>
 </main>
+
 
 <style>
   :global(html) {

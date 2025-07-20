@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer , shell } from 'electron'
 
 const api = {
   platform: process.platform,

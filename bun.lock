@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "my-app",
+      "name": "speed-share",
       "dependencies": {
         "@capacitor/app": "^7.0.1",
         "@capacitor/filesystem": "^7.1.1",

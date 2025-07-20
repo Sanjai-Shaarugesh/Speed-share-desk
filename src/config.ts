@@ -19,6 +19,8 @@ export const stunServers: string[] = [
 export const pageDescription =
   'A client-side secure P2P file sharing app optimized for low-bandwidth conditions.';
 export const githubLink = 'https://github.com/Sanjai-Shaarugesh/Speed-share';
+export const websiteLink = 'https://speed-share-web.vercel.app';
+export const supportEmail = 'shaarugesh6gmail.com';
 
 export const defaultSendOptions: SendOptions = {
   chunkSize: 250 * 1024,

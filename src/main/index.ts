@@ -1,9 +1,10 @@
 import { app, shell, BrowserWindow, ipcMain, nativeTheme } from 'electron';
 import { join } from 'path';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
-import icon from '../../resources/icon.png?asset'
+
 
 const isDark = nativeTheme.shouldUseDarkColors
+const icon = join(__dirname, '../../resources/icon2.webp');
 
 let mainWindow: BrowserWindow | null = null;
 let answerWindow: BrowserWindow | null = null;
@@ -14,7 +15,7 @@ function createWindow(): void {
     height: 800,
     show: false,
     autoHideMenuBar: true,
-    titleBarStyle: 'hidden', 
+    titleBarStyle: 'hidden',
     titleBarOverlay: {
     color: isDark ? '#0f172a' : '#f8fafc',        // very dark bg (slate-900)
     symbolColor: isDark ? '#f1f5f9' : '#334155',  // light text (slate-100 / slate-700)
@@ -26,7 +27,7 @@ function createWindow(): void {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: true,
       contextIsolation: true,
-      enableRemoteModule: false,
+
       nodeIntegration: true,
     },
   });
@@ -91,7 +92,7 @@ function createAnswerWindow(): void {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
       contextIsolation: true,
-      enableRemoteModule: false,
+
       nodeIntegration: false,
     },
   });
@@ -115,11 +116,11 @@ function createAnswerWindow(): void {
     // In development, load with hash route
     answerWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}#/answer`);
   } else {
-  
-    answerWindow.loadFile(join(__dirname, '../renderer/index.html'));
-    
 
-    
+    answerWindow.loadFile(join(__dirname, '../renderer/index.html'));
+
+
+
     // After loading, navigate to answer route
     answerWindow.webContents.once('did-finish-load', () => {
       answerWindow?.webContents.executeJavaScript(`

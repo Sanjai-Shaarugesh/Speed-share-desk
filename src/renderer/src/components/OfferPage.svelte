@@ -377,8 +377,8 @@
           <a href="#/answer">
           <button class="btn btn-dash btn-warning">
             Go to Answer Page <ChevronsLeftRightEllipsis />
-          </a>
           </button>
+          </a>
         </div>
       </div>
     {/if}
