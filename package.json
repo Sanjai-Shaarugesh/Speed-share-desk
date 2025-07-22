@@ -19,11 +19,14 @@
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "npm run build && electron-builder --mac",
     "build:linux": "npm run build && electron-builder --linux",
-    "flatpak": "electron-packager . app --platform linux --arch x64 --out dist/"
+    "flatpak": "electron-packager . app --platform linux --arch x64 --out dist/",
+    "build:flatpak": "npm run build && electron-builder --linux flatpak"
   },
   "dependencies": {
     "@capacitor/app": "^7.0.1",
     "@capacitor/filesystem": "^7.1.1",
+    "@electron-forge/cli": "^7.8.1",
+    "@electron-forge/maker-rpm": "^7.8.1",
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^4.0.0",
     "@electron-uikit/titlebar": "^1.2.0",
