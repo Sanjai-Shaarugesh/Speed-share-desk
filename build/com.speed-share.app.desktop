@@ -1,8 +1,17 @@
-[Desktop Entry]
-Name=Speed Share
-Exec=app
-Icon=com.speed-share.app
-Terminal=false
-Type=Application
-Categories=Utility;Network;FileTransfer;
+[Application]
+name=com.speed-share.app
+runtime=org.freedesktop.Platform
+runtime-version=23.08
+sdk=org.freedesktop.Sdk
+command=speed-share
+
+[Context]
+shared=network;ipc;
+sockets=x11;wayland;pulseaudio;
+devices=all;
+filesystems=home;
+
+[Environment]
+# Optional, for debugging
+ELECTRON_ENABLE_LOGGING=true
 

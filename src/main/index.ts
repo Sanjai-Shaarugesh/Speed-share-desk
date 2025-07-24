@@ -1,9 +1,8 @@
-import { app, shell, BrowserWindow, ipcMain, nativeTheme } from 'electron';
+import { app, shell, BrowserWindow, ipcMain, nativeTheme, dialog } from 'electron';
 import { join } from 'path';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 
-
-const isDark = nativeTheme.shouldUseDarkColors
+const isDark = nativeTheme.shouldUseDarkColors;
 const icon = join(__dirname, '../../resources/icon2.webp');
 
 let mainWindow: BrowserWindow | null = null;
@@ -17,23 +16,53 @@ function createWindow(): void {
     autoHideMenuBar: true,
     titleBarStyle: 'hidden',
     titleBarOverlay: {
-    color: isDark ? '#0f172a' : '#f8fafc',        // very dark bg (slate-900)
-    symbolColor: isDark ? '#f1f5f9' : '#334155',  // light text (slate-100 / slate-700)
-    height: 32
-  },
-
-      ...(process.platform === 'linux' ? { icon } : {}),
+      color: isDark ? '#0f172a' : '#f8fafc',
+      symbolColor: isDark ? '#f1f5f9' : '#334155',
+      height: 32,
+    },
+    ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: true,
       contextIsolation: true,
-
-      nodeIntegration: true,
+      nodeIntegration: false,
     },
+  });
+
+  // Handle permission requests with a dialog
+  mainWindow.webContents.session.setPermissionRequestHandler((_webContents, permission, callback) => {
+    if (permission === 'media') {
+      // Show a native dialog to ask for camera permission
+      dialog
+        .showMessageBox(mainWindow!, {
+          type: 'question',
+          buttons: ['Allow', 'Deny'],
+          defaultId: 0,
+          title: 'Camera Access Request',
+          message: 'This application wants to access your camera for QR code scanning. Do you want to allow this?',
+          detail:
+            process.platform === 'linux'
+              ? 'Ensure Flatpak camera permissions are enabled in your system settings.'
+              : process.platform === 'darwin'
+                ? 'You may need to grant camera access in System Preferences > Security & Privacy.'
+                : 'You may need to grant camera access in Windows Settings > Privacy > Camera.',
+        })
+        .then((response) => {
+          callback(response.response === 0); // Allow if user clicks "Allow" (index 0)
+        })
+        .catch((err) => {
+          console.error('Error showing permission dialog:', err);
+          callback(false); // Deny on error
+        });
+    } else {
+      callback(false); // Deny all other permissions
+    }
   });
 
   mainWindow.on('ready-to-show', () => {
     mainWindow?.show();
+    // Automatically trigger QR scanner on window load
+    mainWindow?.webContents.send('auto-open-qr-scanner');
   });
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -43,17 +72,15 @@ function createWindow(): void {
 
   // Theme updates
   nativeTheme.on('updated', () => {
-    if (mainWindow) {
-      const isDark = nativeTheme.shouldUseDarkColors;
+    const isDark = nativeTheme.shouldUseDarkColors;
+    if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.setTitleBarOverlay({
         color: isDark ? '#1e293b' : '#f8fafc',
         symbolColor: isDark ? '#e2e8f0' : '#475569',
       });
       mainWindow.webContents.send('theme-updated', isDark);
     }
-    // Also update answer window if it exists
-    if (answerWindow) {
-      const isDark = nativeTheme.shouldUseDarkColors;
+    if (answerWindow && !answerWindow.isDestroyed()) {
       answerWindow.setTitleBarOverlay({
         color: isDark ? '#1e293b' : '#f8fafc',
         symbolColor: isDark ? '#e2e8f0' : '#475569',
@@ -70,7 +97,6 @@ function createWindow(): void {
 }
 
 function createAnswerWindow(): void {
-  // Check if answer window already exists and is not destroyed
   if (answerWindow && !answerWindow.isDestroyed()) {
     answerWindow.focus();
     return;
@@ -87,14 +113,42 @@ function createAnswerWindow(): void {
       symbolColor: nativeTheme.shouldUseDarkColors ? '#e2e8f0' : '#475569',
       height: 32,
     },
-    parent: mainWindow || undefined, // Make it a child of main window if exists
+    parent: mainWindow || undefined,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false,
+      sandbox: true,
       contextIsolation: true,
-
       nodeIntegration: false,
     },
+  });
+
+  // Handle permission requests with a dialog for answer window
+  answerWindow.webContents.session.setPermissionRequestHandler((_webContents, permission, callback) => {
+    if (permission === 'media') {
+      dialog
+        .showMessageBox(answerWindow!, {
+          type: 'question',
+          buttons: ['Allow', 'Deny'],
+          defaultId: 0,
+          title: 'Camera Access Request',
+          message: 'This application wants to access your camera for QR code scanning. Do you want to allow this?',
+          detail:
+            process.platform === 'linux'
+              ? 'Ensure Flatpak camera permissions are enabled in your system settings.'
+              : process.platform === 'darwin'
+                ? 'You may need to grant camera access in System Preferences > Security & Privacy.'
+                : 'You may need to grant camera access in Windows Settings > Privacy > Camera.',
+        })
+        .then((response) => {
+          callback(response.response === 0); // Allow if user clicks "Allow" (index 0)
+        })
+        .catch((err) => {
+          console.error('Error showing permission dialog:', err);
+          callback(false); // Deny on error
+        });
+    } else {
+      callback(false);
+    }
   });
 
   answerWindow.on('ready-to-show', () => {
@@ -106,22 +160,14 @@ function createAnswerWindow(): void {
     return { action: 'deny' };
   });
 
-  // Handle window closed
   answerWindow.on('closed', () => {
     answerWindow = null;
   });
 
-  // Load the answer page
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    // In development, load with hash route
     answerWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}#/answer`);
   } else {
-
     answerWindow.loadFile(join(__dirname, '../renderer/index.html'));
-
-
-
-    // After loading, navigate to answer route
     answerWindow.webContents.once('did-finish-load', () => {
       answerWindow?.webContents.executeJavaScript(`
         window.location.hash = '/answer';
@@ -142,29 +188,32 @@ ipcMain.handle('get-theme', () => {
   };
 });
 
-// main.ts
+// GTK theme handling for Linux
 ipcMain.handle('get-gtk-theme', () => {
   if (process.platform !== 'linux') return null;
   return nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
 });
 
-// Watch for theme changes
 if (process.platform === 'linux') {
   nativeTheme.on('updated', () => {
     const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
-    BrowserWindow.getAllWindows().forEach(win => {
-      win.webContents.send('gtk-theme-changed', theme);
+    BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send('gtk-theme-changed', theme);
+      }
     });
   });
 }
 
 // Window controls
 ipcMain.on('minimize-window', () => {
-  mainWindow?.minimize();
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.minimize();
+  }
 });
 
 ipcMain.on('maximize-window', () => {
-  if (mainWindow) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
     if (mainWindow.isMaximized()) {
       mainWindow.unmaximize();
     } else {
@@ -174,12 +223,24 @@ ipcMain.on('maximize-window', () => {
 });
 
 ipcMain.on('close-window', () => {
-  mainWindow?.close();
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.close();
+  }
 });
 
 // Answer window handler
 ipcMain.on('open-answer', () => {
   createAnswerWindow();
+});
+
+// QR scanner handler
+ipcMain.on('qr-scanned', (_event, data: string) => {
+  console.log('QR Code Scanned:', data);
+  if (answerWindow && !answerWindow.isDestroyed()) {
+    answerWindow.webContents.send('qr-scanned', data);
+  } else if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('qr-scanned', data);
+  }
 });
 
 app.whenReady().then(() => {

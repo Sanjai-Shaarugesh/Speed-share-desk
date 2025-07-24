@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer , shell } from 'electron'
+import { contextBridge, ipcRenderer, shell } from 'electron';
 
 const api = {
   platform: process.platform,
@@ -7,10 +7,10 @@ const api = {
   setTheme: (theme: 'light' | 'dark' | 'system') => ipcRenderer.invoke('set-theme', theme),
   getTheme: () => ipcRenderer.invoke('get-theme'),
   onThemeUpdated: (callback: (isDark: boolean) => void) => {
-    ipcRenderer.on('theme-updated', (_, isDark) => callback(isDark))
+    ipcRenderer.on('theme-updated', (_, isDark) => callback(isDark));
   },
   removeThemeListener: () => {
-    ipcRenderer.removeAllListeners('theme-updated')
+    ipcRenderer.removeAllListeners('theme-updated');
   },
 
   // Window controls
@@ -19,36 +19,46 @@ const api = {
   closeWindow: () => ipcRenderer.send('close-window'),
 
   // Answer window
-  openAnswer: () => ipcRenderer.send('open-answer')
-}
+  openAnswer: () => ipcRenderer.send('open-answer'),
 
-if (process.contextIsolated) {
-  try {
-    contextBridge.exposeInMainWorld('electron', api)
-  } catch (error) {
-    console.error(error)
-  }
-} else {
-  // @ts-ignore
-  window.electron = api
-}
+  // External links
+  openExternal: (url: string) => shell.openExternal(url),
 
-contextBridge.exposeInMainWorld('electron', {
+  // Unified window control interface
   windowControls: {
     minimize: () => ipcRenderer.send('window-control', 'minimize'),
     maximize: () => {
       if (process.platform === 'linux') {
-        // Linux needs special handling for maximization
         ipcRenderer.send('window-control', 'toggle-maximize');
       } else {
         ipcRenderer.send('window-control', 'maximize');
       }
     },
     close: () => ipcRenderer.send('window-control', 'close'),
-    isMaximized: () => ipcRenderer.invoke('window-is-maximized')
-  }
-});
+    isMaximized: () => ipcRenderer.invoke('window-is-maximized'),
+  },
 
-contextBridge.exposeInMainWorld('electron', {
-  openExternal: (url: string) => shell.openExternal(url),
-});
+  // Optional: Add camera permission helper here
+  requestCameraPermission: async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      stream.getTracks().forEach(track => track.stop());
+      return true;
+    } catch {
+      return false;
+    }
+  }
+};
+
+// Safely expose to the renderer
+if (process.contextIsolated) {
+  try {
+    contextBridge.exposeInMainWorld('electron', api);
+  } catch (error) {
+    console.error('Failed to expose electron API:', error);
+  }
+} else {
+  // Fallback for non-context-isolated environments (dev mode etc.)
+  // @ts-ignore
+  window.electron = api;
+}

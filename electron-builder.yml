@@ -1,19 +1,10 @@
 appId: com.speed-share.app
 productName: speed-share
-
-# Application Metadata
-copyright: Copyright © ${author}
-description: Fast and secure file sharing application with real-time synchronization
-homepage: https://speed-share.com
-author:
-  name: Sanjai Shaarugesh
-  email: shaarugesh6@gmail.com
-license: MIT
-version: 1.0.0
-
 directories:
   buildResources: build
-  output: dist
+
+
+
 
 files:
   - '!**/.vscode/*'
@@ -24,271 +15,45 @@ files:
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 
+
+
+
 asarUnpack:
   - resources/**
-
 win:
   executableName: speed-share
-  icon: build/icon.ico
-  target:
-    - target: nsis
-      arch:
-        - x64
-        - ia32
-
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
-  createStartMenuShortcut: true
-  oneClick: false
-  allowToChangeInstallationDirectory: true
-  installerIcon: build/installer.ico
-  uninstallerIcon: build/uninstaller.ico
-
 mac:
-  icon: build/icon.icns
-  category: public.app-category.utilities
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
     - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
-    - CFBundleURLTypes:
-        - CFBundleURLName: speed-share
-          CFBundleURLSchemes:
-            - speed-share
   notarize: false
-  target:
-    - target: dmg
-      arch:
-        - x64
-        - arm64
-
 dmg:
   artifactName: ${name}-${version}.${ext}
-  title: ${productName} ${version}
-  icon: build/icon.icns
-  background: build/dmg-background.png
-  contents:
-    - x: 130
-      y: 220
-    - x: 410
-      y: 220
-      type: link
-      path: /Applications
-
 linux:
-  icon: build/icon.png
   target:
     - AppImage
     - snap
     - deb
     - flatpak
-  maintainer: electronjs.org
-  vendor: Speed Share Team
-  category: Utility
-  synopsis: Fast and secure file sharing application
-  description: |
-    Speed Share is a modern file sharing application that enables fast and secure
-    file transfers with real-time synchronization capabilities. Perfect for teams
-    and individuals who need reliable file sharing solutions.
-  desktop:
-    Name: Speed Share
-    Comment: Fast and secure file sharing
-    Keywords: file;share;transfer;sync;collaboration
-    MimeType: application/x-speed-share;x-scheme-handler/speed-share
+    - dir
 
+
+  maintainer: electronjs.org
+  category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}
 
-snap:
-  summary: Fast and secure file sharing application
-  description: |
-    Speed Share enables fast and secure file transfers with real-time
-    synchronization capabilities. Perfect for teams and individuals.
-  grade: stable
-  confinement: strict
-  plugs:
-    - home
-    - network
-    - camera
-    - audio-record
-    - removable-media
-    - desktop
-    - desktop-legacy
-    - x11
-    - unity7
-    - wayland
-
-deb:
-  priority: optional
-  depends:
-    - libgtk-3-0
-    - libnotify4
-    - libnss3
-    - libxss1
-    - libxtst6
-    - xdg-utils
-    - libatspi2.0-0
-    - libdrm2
-    - libxcomposite1
-    - libxdamage1
-    - libxrandr2
-    - libgbm1
-    - libxkbcommon0
-    - libasound2
-
-# Flatpak Configuration
-flatpak:
-  runtimeVersion: '22.08'
-  sdk: org.freedesktop.Sdk
-  runtime: org.freedesktop.Platform
-  base: org.electronjs.Electron2.BaseApp
-  baseVersion: '22.08'
-  branch: stable
-
-  # Permissions
-  finishArgs:
-    - --share=ipc
-    - --socket=x11
-    - --socket=wayland
-    - --socket=pulseaudio
-    - --share=network
-    - --device=dri
-    - --filesystem=home
-    - --filesystem=xdg-documents
-    - --filesystem=xdg-download
-    - --talk-name=org.freedesktop.Notifications
-    - --talk-name=org.kde.StatusNotifierWatcher
-    - --own-name=org.mpris.MediaPlayer2.speed-share
-    - --system-talk-name=org.freedesktop.UPower
-    - --talk-name=org.freedesktop.secrets
-    - --device=all  # For camera/microphone access
-
-  # Application metadata for Flatpak
-  appdata:
-    id: com.speed-share.app
-    name: Speed Share
-    summary: Fast and secure file sharing application
-    description: |
-      <p>
-        Speed Share is a modern, cross-platform file sharing application designed
-        for fast and secure file transfers. Whether you're collaborating with a team
-        or sharing files with friends, Speed Share provides reliable, real-time
-        synchronization capabilities.
-      </p>
-      <p>Features:</p>
-      <ul>
-        <li>Lightning-fast file transfers</li>
-        <li>End-to-end encryption for security</li>
-        <li>Real-time synchronization</li>
-        <li>Cross-platform compatibility</li>
-        <li>Intuitive user interface</li>
-        <li>Camera and microphone integration</li>
-        <li>Drag and drop support</li>
-      </ul>
-      <p>
-        Perfect for professionals, students, and anyone who needs to share files
-        quickly and securely across different devices and platforms.
-      </p>
-
-    # App metadata
-    project_license: MIT
-    developer_name: Speed Share Team
-    url:
-      homepage: https://speed-share.com
-      bugtracker: https://github.com/speed-share/app/issues
-      help: https://speed-share.com/support
-      donation: https://speed-share.com/donate
-
-    # Categories
-    categories:
-      - Utility
-      - Network
-      - FileTransfer
-
-    # Keywords for discoverability
-    keywords:
-      - file
-      - share
-      - transfer
-      - sync
-      - collaboration
-      - network
-      - security
-      - encryption
-
-    # Screenshots (you'll need to provide these files)
-    screenshots:
-      - url: https://speed-share.com/screenshots/main-window.png
-        caption: Main application window showing file sharing interface
-      - url: https://speed-share.com/screenshots/transfer-progress.png
-        caption: Real-time transfer progress with detailed statistics
-      - url: https://speed-share.com/screenshots/settings.png
-        caption: Comprehensive settings and configuration options
-      - url: https://speed-share.com/screenshots/encryption.png
-        caption: Advanced security and encryption features
-
-    # Content rating
-    content_rating:
-      oars-1.1:
-        violence-cartoon: none
-        violence-fantasy: none
-        violence-realistic: none
-        violence-bloodshed: none
-        violence-sexual: none
-        violence-desecration: none
-        violence-slavery: none
-        violence-worship: none
-        drugs-alcohol: none
-        drugs-narcotics: none
-        drugs-tobacco: none
-        sex-nudity: none
-        sex-themes: none
-        sex-homosexuality: none
-        sex-prostitution: none
-        sex-adultery: none
-        sex-appearance: none
-        language-profanity: none
-        language-humor: none
-        language-discrimination: none
-        social-chat: intense  # File sharing involves communication
-        social-info: mild     # App may collect usage statistics
-        social-audio: none
-        social-location: none
-        social-contacts: none
-        money-purchasing: none
-        money-gambling: none
-
-  # Build modules (if you need custom dependencies)
-  modules: []
-
 npmRebuild: false
-
 publish:
   provider: generic
   url: https://example.com/auto-updates
-
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/
-
-# Additional build configuration
-extraMetadata:
-  main: dist-electron/main/index.js
-
-# File associations
-fileAssociations:
-  - ext: speedshare
-    name: Speed Share File
-    description: Speed Share project file
-    icon: build/file-icon.png
-    role: Editor
-
-# Protocol associations
-protocols:
-  - name: speed-share-protocol
-    schemes:
-      - speed-share

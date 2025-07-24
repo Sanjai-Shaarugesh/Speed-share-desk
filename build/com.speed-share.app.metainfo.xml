@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+  <id>com.speed-share.app</id>
+  <name>Speed Share</name>
+  <summary>Fast file sharing application</summary>
+  <description>
+    <p>Speed Share is a cross-platform application for quickly sharing files between devices.</p>
+  </description>
+  <categories>
+    <category>Utility</category>
+    <category>FileTransfer</category>
+  </categories>
+  <releases>
+    <release version="1.0.0" date="2023-01-01"/>
+  </releases>
+  <content_rating type="oars-1.1">
+    <content_attribute id="violence-cartoon">none</content_attribute>
+    <content_attribute id="violence-fantasy">none</content_attribute>
+    <content_attribute id="violence-realistic">none</content_attribute>
+    <content_attribute id="violence-bloodshed">none</content_attribute>
+    <content_attribute id="violence-sexual">none</content_attribute>
+    <content_attribute id="drugs-alcohol">none</content_attribute>
+    <content_attribute id="drugs-narcotics">none</content_attribute>
+    <content_attribute id="drugs-tobacco">none</content_attribute>
+    <content_attribute id="sex-nudity">none</content_attribute>
+    <content_attribute id="sex-themes">none</content_attribute>
+    <content_attribute id="language-profanity">none</content_attribute>
+    <content_attribute id="language-humor">none</content_attribute>
+    <content_attribute id="language-discrimination">none</content_attribute>
+    <content_attribute id="social-chat">none</content_attribute>
+    <content_attribute id="social-info">none</content_attribute>
+    <content_attribute id="social-audio">none</content_attribute>
+    <content_attribute id="social-location">none</content_attribute>
+    <content_attribute id="social-contacts">none</content_attribute>
+    <content_attribute id="money-purchasing">none</content_attribute>
+    <content_attribute id="money-gambling">none</content_attribute>
+  </content_rating>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/Sanjai-Shaarugesh/Speed-share-desk/refs/heads/main/img/2.png</image>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/Sanjai-Shaarugesh/Speed-share-desk/refs/heads/main/img/3.png</image>
+    </screenshot>
+  </screenshots>
+  <developer_name>Sanjai Shaarugesh</developer_name>
+  <update_contact>shaarugesh6@gmail.com</update_contact>
+</component>
