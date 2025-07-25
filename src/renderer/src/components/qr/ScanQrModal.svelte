@@ -1,7 +1,7 @@
 <script lang="ts">
   import QrScanner from 'qr-scanner';
   import { onMount, onDestroy } from 'svelte';
-  import { ScanLine, ScanQrCode, Camera, RotateCcw } from '@lucide/svelte';
+  import { ScanLine, ScanQrCode, Camera, RotateCcw, Upload, Share } from '@lucide/svelte';
 
   interface Props {
     onScanSuccess: (data: string) => void;
@@ -23,6 +23,7 @@
   let isModalOpen = $state(false);
   let qrScanner = $state<QrScanner | null>(null);
   let videoElement = $state<HTMLVideoElement | null>(null);
+  let fileInput = $state<HTMLInputElement | null>(null);
   let isCameraActive = $state(false);
   let errorMessage = $state('');
   let permissionRequested = $state(false);
@@ -33,23 +34,29 @@
   let currentCameraIndex = $state(0);
   let isFlipped = $state(false);
   let scanningIndicator = $state(false);
+  let uploadingImage = $state(false);
 
-  // Enhanced scanner configuration for better performance
+  // Enhanced scanner configuration optimized for mobile screen detection
   let scannerConfig = $derived({
     highlightScanRegion: true,
     highlightCodeOutline: true,
     preferredCamera: availableCameras[currentCameraIndex]?.id || 'environment',
-    maxScansPerSecond: 25,
+    maxScansPerSecond: 30, // Increased for faster detection
+    returnDetailedScanResult: true,
     calculateScanRegion: (video: HTMLVideoElement) => {
-      const smallerDimension = Math.min(video.videoWidth, video.videoHeight);
-      const scanRegionSize = Math.round(0.8 * smallerDimension);
+      // Optimized scan region for mobile screens
+      const width = video.videoWidth;
+      const height = video.videoHeight;
+      const minDimension = Math.min(width, height);
+      const scanSize = Math.round(0.9 * minDimension); // Larger scan area
+
       return {
-        x: Math.round((video.videoWidth - scanRegionSize) / 2),
-        y: Math.round((video.videoHeight - scanRegionSize) / 2),
-        width: scanRegionSize,
-        height: scanRegionSize,
-        downScaledWidth: 500,
-        downScaledHeight: 500,
+        x: Math.round((width - scanSize) / 2),
+        y: Math.round((height - scanSize) / 2),
+        width: scanSize,
+        height: scanSize,
+        downScaledWidth: 600, // Higher resolution for better mobile detection
+        downScaledHeight: 600,
       };
     }
   });
@@ -113,9 +120,12 @@
       const constraints: MediaStreamConstraints = {
         video: {
           facingMode: 'environment',
-          width: { ideal: 1280, min: 640 },
-          height: { ideal: 720, min: 480 },
-          frameRate: { ideal: 30, min: 15 }
+          width: { ideal: 1920, min: 1280 }, // Higher resolution for mobile screen detection
+          height: { ideal: 1080, min: 720 },
+          frameRate: { ideal: 60, min: 30 }, // Higher frame rate for smoother detection
+          focusMode: 'continuous', // Continuous autofocus
+          exposureMode: 'continuous', // Auto exposure
+          whiteBalanceMode: 'continuous' // Auto white balance
         },
       };
 
@@ -177,40 +187,41 @@
         }
       });
 
-      // Create QR scanner with proper error handling
+      // Create QR scanner with mobile-optimized settings
       qrScanner = new QrScanner(
         videoElement,
         handleScanResult,
         {
           ...scannerConfig,
-          // Add explicit error handling in config
+          // Enhanced mobile screen detection settings
           onDecodeError: (error) => {
-            // Silently handle decode errors - these happen normally when no QR code is visible
+            // Silently handle decode errors
             console.debug('QR decode error (normal):', error);
           }
         }
       );
 
-      // Use proper event listener attachment
+      // Enhanced error handling
       const handleError = (event: any) => {
         console.error('QR Scanner error event:', event);
         handleScannerError(event.detail || event);
       };
 
-      // Try modern event listener first, fallback to older method
       try {
         if (qrScanner.addEventListener) {
           qrScanner.addEventListener('error', handleError);
         } else if ('on' in qrScanner) {
-          // Some versions use .on() method
           (qrScanner as any).on('error', handleError);
         }
       } catch (listenerError) {
         console.warn('Could not attach error listener:', listenerError);
-        // Continue without error listener - errors will be caught by try/catch
       }
 
       await qrScanner.start();
+
+      // Enable mobile screen optimizations
+      await optimizeForMobileScreens();
+
       isCameraActive = true;
       isScanning = true;
       errorMessage = '';
@@ -223,6 +234,43 @@
 
     } catch (err) {
       handleScannerError(err);
+    }
+  }
+
+  // Optimize camera settings for mobile screen detection
+  async function optimizeForMobileScreens() {
+    if (!qrScanner || !videoElement) return;
+
+    try {
+      const stream = videoElement.srcObject as MediaStream;
+      if (stream) {
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack && videoTrack.getCapabilities) {
+          const capabilities = videoTrack.getCapabilities();
+          const settings: any = {};
+
+          // Optimize for screen brightness and contrast
+          if (capabilities.brightness) {
+            settings.brightness = capabilities.brightness.max * 0.8;
+          }
+          if (capabilities.contrast) {
+            settings.contrast = capabilities.contrast.max * 0.9;
+          }
+          if (capabilities.saturation) {
+            settings.saturation = capabilities.saturation.max * 0.7;
+          }
+          if (capabilities.sharpness) {
+            settings.sharpness = capabilities.sharpness.max;
+          }
+
+          // Apply settings
+          if (Object.keys(settings).length > 0) {
+            await videoTrack.applyConstraints({ advanced: [settings] });
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Could not apply mobile screen optimizations:', error);
     }
   }
 
@@ -251,7 +299,6 @@
   function handleScannerError(err: any) {
     console.error('Scanner error:', err);
 
-    // Extract meaningful error message
     let message = '';
     if (err instanceof Error) {
       message = err.message;
@@ -268,7 +315,6 @@
     isScanning = false;
     scanningIndicator = false;
 
-    // Smart auto-retry logic for recoverable errors
     const isRetryableError = !errorMessage.toLowerCase().includes('denied') &&
                             !errorMessage.toLowerCase().includes('not found') &&
                             !errorMessage.toLowerCase().includes('not supported') &&
@@ -288,7 +334,8 @@
   function setupContinuousScanning() {
     if (qrScanner && typeof qrScanner.setGrayscaleWeights === 'function') {
       try {
-        qrScanner.setGrayscaleWeights(0.299, 0.587, 0.114, true);
+        // Optimized grayscale weights for mobile screens
+        qrScanner.setGrayscaleWeights(0.2126, 0.7152, 0.0722, true);
       } catch (e) {
         console.warn('Could not set grayscale weights:', e);
       }
@@ -298,6 +345,14 @@
   function setupMirrorDetection() {
     if (qrScanner && videoElement) {
       console.log('Mirror detection enabled for omnidirectional scanning');
+      // Enable inverted scanning for mobile screens
+      if (typeof qrScanner.setInversionMode === 'function') {
+        try {
+          qrScanner.setInversionMode('both');
+        } catch (e) {
+          console.warn('Could not set inversion mode:', e);
+        }
+      }
     }
   }
 
@@ -309,7 +364,8 @@
   function handleScanResult(result: QrScanner.ScanResult) {
     const currentTime = Date.now();
 
-    if (currentTime - lastScanTime < 500) {
+    // Faster debounce for mobile screens
+    if (currentTime - lastScanTime < 200) {
       return;
     }
 
@@ -317,7 +373,7 @@
     scanCount++;
 
     scanningIndicator = true;
-    setTimeout(() => scanningIndicator = false, 300);
+    setTimeout(() => scanningIndicator = false, 200);
 
     if (!continuousScanning) {
       stopScanner();
@@ -335,6 +391,78 @@
     }
   }
 
+  // Handle image upload and scanning
+  async function handleImageUpload(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) return;
+
+    uploadingImage = true;
+    errorMessage = '';
+
+    try {
+      const result = await QrScanner.scanImage(file, {
+        returnDetailedScanResult: true,
+        alsoTryWithoutSourceRect: true,
+        // Try multiple orientations and inversions
+        tryHarder: true
+      });
+
+      uploadingImage = false;
+      handleScanResult(result);
+
+      // Clear the input
+      input.value = '';
+    } catch (error) {
+      uploadingImage = false;
+      errorMessage = 'No QR code found in the uploaded image. Please try another image.';
+      input.value = '';
+      console.error('Image scan error:', error);
+    }
+  }
+
+  // Share QR code functionality
+  async function shareQRCode() {
+    if (!videoElement || !isCameraActive) return;
+
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      canvas.width = videoElement.videoWidth;
+      canvas.height = videoElement.videoHeight;
+      ctx.drawImage(videoElement, 0, 0);
+
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+
+        if (navigator.share) {
+          try {
+            const file = new File([blob], 'qr-scan.jpg', { type: 'image/jpeg' });
+            await navigator.share({
+              title: 'QR Scanner View',
+              files: [file]
+            });
+          } catch (shareError) {
+            console.log('Share cancelled or failed:', shareError);
+          }
+        } else {
+          // Fallback: download the image
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'qr-scan.jpg';
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      }, 'image/jpeg', 0.9);
+    } catch (error) {
+      console.error('Share error:', error);
+    }
+  }
+
   async function switchCamera() {
     if (availableCameras.length <= 1) return;
 
@@ -344,6 +472,8 @@
     if (qrScanner) {
       try {
         await qrScanner.setCamera(availableCameras[currentCameraIndex].id);
+        // Re-optimize for mobile screens with new camera
+        await optimizeForMobileScreens();
       } catch (err) {
         console.error('Failed to switch camera:', err);
         currentCameraIndex = previousIndex;
@@ -361,6 +491,10 @@
     if (videoElement) {
       videoElement.style.transform = isFlipped ? 'scaleX(-1)' : 'scaleX(1)';
     }
+  }
+
+  function triggerFileInput() {
+    fileInput?.click();
   }
 
   function toggleModal(open: boolean) {
@@ -404,12 +538,43 @@
   {/if}
 </button>
 
+<!-- Hidden file input for image upload -->
+<input
+  bind:this={fileInput}
+  type="file"
+  accept="image/*"
+  onchange={handleImageUpload}
+  class="hidden"
+  aria-label="Upload QR code image"
+/>
+
 {#if isModalOpen}
   <div class="fixed inset-0 backdrop-blur-xs bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-transparent rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-bold text-white-900">{modalTitle}</h3>
         <div class="flex gap-2">
+          <button
+            class="text-gray-500 hover:text-gray-700"
+            onclick={triggerFileInput}
+            aria-label="Upload Image"
+            title="Upload QR Code Image"
+            disabled={uploadingImage}
+          >
+            <Upload class={uploadingImage ? 'animate-spin' : ''} />
+          </button>
+
+          {#if isCameraActive}
+            <button
+              class="text-gray-500 hover:text-gray-700"
+              onclick={shareQRCode}
+              aria-label="Share View"
+              title="Share Scanner View"
+            >
+              <Share />
+            </button>
+          {/if}
+
           {#if availableCameras.length > 1}
             <button
               class="text-gray-500 hover:text-gray-700"
@@ -450,11 +615,16 @@
           <track kind="captions" />
         </video>
 
+        {#if uploadingImage}
+          <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div class="text-white text-lg flex items-center gap-2">
+              <Upload class="animate-spin" />
+              Processing image...
+            </div>
+          </div>
+        {/if}
 
-
-
-
-        {#if !isCameraActive && !errorMessage}
+        {#if !isCameraActive && !errorMessage && !uploadingImage}
           <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
             <div class="text-white text-lg">Initializing camera...</div>
           </div>
@@ -474,11 +644,18 @@
       </div>
 
       <p class="mt-4 text-sm text-gray-600">
-        Position the QR code within the frame to scan. Works with normal and mirrored QR codes from any angle and distance. Make sure it's well-lit and clearly visible.
+        Position the QR code within the frame or upload an image. Optimized for mobile screens and works from any angle. Make sure it's well-lit and clearly visible.
       </p>
 
       <div class="mt-4 flex justify-end gap-2">
         <button class="btn btn-error" onclick={() => toggleModal(false)}>Cancel</button>
+        <button
+          class="btn btn-secondary"
+          onclick={triggerFileInput}
+          disabled={uploadingImage}
+        >
+          {uploadingImage ? 'Processing...' : 'Upload Image'}
+        </button>
         {#if !isCameraActive && errorMessage}
           <button
             class="btn btn-primary"
